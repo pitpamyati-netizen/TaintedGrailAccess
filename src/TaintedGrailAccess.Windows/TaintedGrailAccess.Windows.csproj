@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework Condition="'$(GraphTargetFramework)' == ''">netstandard2.0</TargetFramework>
+    <TargetFramework Condition="'$(GraphTargetFramework)' != ''">$(GraphTargetFramework)</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>TaintedGrailAccess.Windows</AssemblyName>
+    <RootNamespace>TaintedGrailAccess.Windows</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../TaintedGrailAccess.Runtime/TaintedGrailAccess.Runtime.csproj" />
+  </ItemGroup>
+</Project>

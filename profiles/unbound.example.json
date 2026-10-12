@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "status": "unbound",
+  "game": {
+    "title": "Tainted Grail: Conquest",
+    "steamAppId": "1199030",
+    "storefront": null,
+    "buildId": null,
+    "applicationVersion": null
+  },
+  "runtime": {
+    "backend": null,
+    "architecture": null,
+    "unityVersion": null,
+    "confirmedByGameLog": false
+  },
+  "loader": { "name": null, "version": null, "sha256": null },
+  "assemblies": [],
+  "requiredPorts": {
+    "stateReadVerified": false,
+    "originalActionInvokeVerified": false,
+    "mainThreadTickVerified": false,
+    "inputArbitrationVerified": false,
+    "nativeSpeechVerified": false
+  },
+  "inputEvidence": {
+    "captureBeforeGameInput": false,
+    "globalKeymapPerChord": false,
+    "toolkitSubmitOwnership": false,
+    "modalExclusivity": false,
+    "textAndRawCaptureStandDown": false,
+    "releaseAndWindowFocus": false
+  },
+  "bindings": [],
+  "supportedScreens": [],
+  "blindUserAccepted": false,
+  "lastVerifiedUtc": null
+}

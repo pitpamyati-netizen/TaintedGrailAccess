@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>TaintedGrailAccess.BepInEx</AssemblyName>
+    <RootNamespace>TaintedGrailAccess.BepInExHost</RootNamespace>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../TaintedGrailAccess.Windows/TaintedGrailAccess.Windows.csproj" />
+    <ProjectReference Include="../TaintedGrailAccess.Runtime/TaintedGrailAccess.Runtime.csproj" />
+    <Reference Include="BepInEx">
+      <HintPath>$(BepInExDir)/core/BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine" Condition="Exists('$(GameManagedDir)/UnityEngine.dll')">
+      <HintPath>$(GameManagedDir)/UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(GameManagedDir)/UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+  <Target Name="ValidateLocalGameReferences" BeforeTargets="ResolveReferences">
+    <Error Condition="'$(BepInExDir)' == '' Or !Exists('$(BepInExDir)/core/BepInEx.dll')"
+           Text="Set BepInExDir to the local BepInEx 5 folder containing core/BepInEx.dll. No loader DLL is downloaded by this project." />
+    <Error Condition="'$(GameManagedDir)' == '' Or !Exists('$(GameManagedDir)/UnityEngine.CoreModule.dll')"
+           Text="Set GameManagedDir to this game's local *_Data/Managed directory containing UnityEngine.CoreModule.dll. Verify Mono first; this host does not support IL2CPP." />
+    <Error Condition="!Exists('$(GameManagedDir)/mscorlib.dll')"
+           Text="The supplied Managed directory has no mscorlib.dll. Verify the game's actual scripting backend before building this Mono host." />
+  </Target>
+</Project>

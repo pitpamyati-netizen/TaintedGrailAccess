@@ -1,0 +1,122 @@
+# Соответствие приложенному Graph A11y Draft 1
+
+Нормативный источник: [неизменённый пользовательский файл](spec/graph-a11y-spec.original.md).
+Дата внутри источника: 17 июля 2026. Описание происхождения RTAccess/WrathAccess
+приведено самим дополнением; это не независимая сертификация данной реализации.
+
+Обозначения: **код** — реализованная переносимая логика; **тест** — собственная
+поведенческая проверка; **интеграция** — обязательство будущего игрового host.
+Ни одна строка «код/тест» не означает, что соответствующая функция доступна в
+запущенной Conquest. Точные результаты последнего прогона — в TEST_RESULTS.md.
+
+## Аксиомы и порты
+
+| Требование | Реализация / проверка | Граница |
+| --- | --- | --- |
+| A1: параллельное дерево | GraphBuilder/KeyGraph; fake UI navigation | Native focus не используется как модель; physical UI adapter ещё нужен |
+| A2: immediate mode | Rerender перед операциями, новый builder; mutation tests | Живое чтение игры — интеграция |
+| A3: identity, не render reference | ControlId; reference/structural/backward survivor tests | Domain id конкретной карты нужно найти |
+| A4: announce once | Navigator.AnnounceLanding, differ/direct memory; speech/sound-failure tests | Игровые hooks не должны добавлять сторонние focus Speak |
+| A5: оригинальные handlers | Vtable invokers; scope model | Все игровые action bindings пока отсутствуют |
+| A6: видимость как у зрячего | Обязательные правила discovery и coverage | Фильтр видимости Conquest не реализован, это blocker |
+| A7: provenance речи | Interrupt для прямого input, queue для differ/Live | Native очереди нужно проверить с настоящим NVDA |
+| A8: локализация | Localizer и таблицы ru/en, separate startup table | Игровые строки и семантика icon text — интеграция |
+| P1–P9 | Подробная таблица в ARCHITECTURE.md | Особо P4: ownership model не заменяет физические hooks |
+
+## Ядро: разделы 3–6
+
+| Раздел | Что реализовано | Где проверяется |
+| --- | --- | --- |
+| 3.1 ControlId | Structural-only equality/hash; отдельное ReferenceEquals; structural/referenced/for-object | IdentityTests, ReconciliationTests |
+| 3.2 Announcement | Живая Func<string>, kind, Live; пустые значения молчат | AnnouncementTests; Runtime Live cases |
+| 3.3 ControlType | Тип — data, common parts, stable order, node override | AnnouncementTests |
+| 3.4 Vtable | Primary/secondary/modified/tooltip/adjust/state/search/sounds/expand slots | OperationTests, TreeTests; Runtime |
+| 3.5 Nodes/render | Directions+labels, parent/context, focusable, group/stop/region/position | BuilderTests |
+| 3.6 GraphState | Cursor/order/suggestion/stop memory/expanded per screen | ReconciliationTests; Runtime stack cases |
+| 4.1 Menu rows | Left/right, same-stop vertical, optional column preservation | BuilderTests |
+| 4.2 Raw graph | AddNode/Connect; dangling/nonfocusable destinations dropped | BuilderTests |
+| 4.3 Stops/regions | Stable auto/explicit keys; arrows не пересекают stops | BuilderTests, OperationTests |
+| 4.4 Context/group | Нефокусируемые родители, вложенность, подавление subtree | BuilderTests, TreeTests |
+| 4.5 Seam stitching | Menu/raw обе стороны; только missing edges; разрыв skip-chain | BuilderTests; hidden-scope Connect regression |
+| 4.6 Positions | Row positions и siblings(parent,stop), raw none, parent suppression | BuilderTests, AnnouncementTests |
+| 4.7 Validation | Duplicate IDs, empty announcements, незакрытые scopes; empty=null | BuilderTests |
+| 5.0 Fresh operations | Move/edge/stop/region/focus/tree/action/search перестраивают graph | Mutation/reorder/action tests |
+| 5.1 Total order | Down-right order, cycles guarded, остальные declared узлы appended | ReconciliationTests, OperationTests |
+| 5.2 Reconciliation | Suggestion; reference; structural; прежний предшественник; selected/start | ReconciliationTests |
+| 5.2 Selected | Selected metadata учитывает common и override; речь не определяет выбор | Selected-common regression, Runtime initial-stop case |
+| 5.3 Move | Direction, no-move result, edge loop visited set | OperationTests |
+| 5.3 Stops | Memory → selected → first; wrap/nonwrap | OperationTests |
+| 5.3 Regions | Только текущий stop; first node целевого region | OperationTests |
+| 5.3 Focus | Focus(id), FocusByReference(obj) | ReconciliationTests, OperationTests |
+| 5.3 Trees | Expand/descend/collapse/ascend, empty auto-recollapse, sibling edges | TreeTests, cross-stop regressions |
+| 5.3 Invokers | False для отсутствующего slot; original delegate для имеющегося | OperationTests |
+| 6.1 Effective parts | Common merged/overridden; stable type order; kind filter | AnnouncementTests |
+| 6.2 Path diff | Общий prefix по Id, outermost-first, label dedupe, transition label | AnnouncementTests |
+| 6.3 Leaf readout | Живые parts, localized expansion/position, own flags | AnnouncementTests |
+
+Ядро не содержит ссылок на Unity, BepInEx, Harmony, Win32 или speech output.
+Сборка Graph отдельной DLL без этих ссылок проверяет эту границу практически.
+
+## Политики: раздел 7
+
+| Раздел | В переносимом коде | Осталось в игре |
+| --- | --- | --- |
+| 7.1 Keys | Arrows, adjust, tree edges, Tab, Home/End, regions, actions, tooltip, Back, search | Raw capture и OS key repeat; пользовательский remapping |
+| 7.2 Differ | Queued screen title/automatic landing; direct interrupt updates shared memory | Не создавать дополнительный focus narrator в patches |
+| 7.3 Consume/bubble | No focus passes actions; optional exploration edges; contextual first | Physical per-chord gating во всех input paths |
+| 7.4 StateText | Сравнение до/после, immediate speech, live rebaseline | Действительные state providers с отказом stale targets |
+| 7.5 Live watch | Focus baseline; changed part queue; stable part keys | Текст должен отражать видимый текущий state |
+| 7.6 Unfocused/blur | Tab seats; nonwrapped край возвращает world; cleared cursor/differ | Исследование/движение и его commands |
+| 7.7 Search | Stop scope, rich text stripping, exclude, live results, arrows/edges/Escape | Полное определение native text fields, layout/IME/raw capture |
+| 7.8 Build isolation | FaultBoundary по screen+exception type; state survives empty | Верные IsActive и UI lifetime guards |
+
+Дополнительные регрессии защищают от двойного действия после исключения,
+повторного Enter при удержании, HoverSound failure после уже сказанного фокуса,
+перехода в modal/raw screen тем же нажатием и потери selection из-за verbosity.
+
+## Четыре пути ввода: раздел 8
+
+| Путь | Статус |
+| --- | --- |
+| Poller мода | KeyChord-контракт есть; физический Windows/Unity capture и порядок обновлений не подключены |
+| Global keymap/Rewired | Модель claims по chord/frame есть; game patches не найдены и не поставлены |
+| UI focus/Submit | Ownership scope и suppression API проверены; реальные guards не подключены |
+| Exclusive modal | Runtime policy проверена; полная физическая exclusivity ожидает host |
+
+Raw capture, native text entry и неперехватываемые скринридером сочетания входят
+в обязательный M1 gate. Полное muted input допускается только для mod-owned modal.
+
+## Экраны: раздел 9
+
+Реализованы IsActive polling, parent/layer, lifecycle, state отдельного экрана,
+top-root/deepest-child priority, сохранение покрытого cursor, reset popped screen,
+KeepStateOnPop, StartUnfocused, Exclusive, CapturesRawInput, InitialFocusStop,
+ScreenName. Title произносится в очереди перед landing.
+
+Проверяются покрытие/возврат, pop/reset/keep, inactive parent, смена контекста
+во время действия и Build exceptions. Реальные screen predicates игры не входят
+в синтетические тесты и должны пройти ручные сценарии.
+
+## Явные решения для неоднозначных деталей Draft 1
+
+- Неявно созданная группа сначала свёрнута.
+- На границе raw → menu ищется последний raw node без Down; существующие
+  связи не переписываются. Полностью подавленная группа не добавляет даже Connect.
+- Поиск — вхождение подстроки с OrdinalIgnoreCase, в том числе кириллица;
+  варианты е/ё и полноценный IME не обещаны.
+- Полностью пустой render сохраняет state, включая suggestion до следующего
+  пригодного render. Невалидный suggestion в пригодном render поглощается один раз.
+- Rerender(false) поддерживает намеренно неусаженный cursor; обычные kernel
+  операции всё равно выполняют reconcile.
+- Home/End в одноосной горизонтальной строке используют Left/Right; в обычном
+  меню Up/Down; в дереве first/last sibling. Специальным grids нужен screen design.
+- Английские defaults компоновщика пригодны для автономных тестов; Runtime
+  обязательно подставляет локализованные expansion/position strings.
+
+## Что нельзя писать о соответствии
+
+Комплект тестов создан для этого проекта по дополнению. Оригинальная suite
+RTAccess/WrathAccess, упомянутая как примерно сто тестов, не была приложена и
+не запускалась. Правильная формулировка: «реализовано по Graph A11y Draft 1,
+переносимая логика проверена собственными поведенческими тестами».
+Полное соответствие игрового мода требует P1–P5 и in-game acceptance.

@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework Condition="'$(GraphTargetFramework)' == ''">netstandard2.0</TargetFramework>
+    <TargetFramework Condition="'$(GraphTargetFramework)' != ''">$(GraphTargetFramework)</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../TaintedGrailAccess.Graph/TaintedGrailAccess.Graph.csproj" />
+  </ItemGroup>
+</Project>

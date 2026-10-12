@@ -1,0 +1,70 @@
+{
+  "success": true,
+  "sdk": "8.0.425",
+  "method": "Direct SDK Roslyn compiler, separate assemblies",
+  "production_reference_check": true,
+  "game_tested": false,
+  "native_speech_tested": false,
+  "results": [
+    {
+      "project": "TaintedGrailAccess.Graph",
+      "phase": "compile",
+      "exit_code": 0,
+      "reference_target": "netstandard2.0"
+    },
+    {
+      "project": "TaintedGrailAccess.Runtime",
+      "phase": "compile",
+      "exit_code": 0,
+      "reference_target": "netstandard2.0"
+    },
+    {
+      "project": "TaintedGrailAccess.Windows",
+      "phase": "compile",
+      "exit_code": 0,
+      "reference_target": "netstandard2.0"
+    },
+    {
+      "project": "TaintedGrailAccess.Graph.Tests",
+      "phase": "compile",
+      "exit_code": 0,
+      "reference_target": "net8.0"
+    },
+    {
+      "project": "TaintedGrailAccess.Graph.Tests",
+      "phase": "run",
+      "exit_code": 0,
+      "output": "Graph kernel: 94 passed; 0 failed."
+    },
+    {
+      "project": "TaintedGrailAccess.Runtime.Tests",
+      "phase": "compile",
+      "exit_code": 0,
+      "reference_target": "net8.0"
+    },
+    {
+      "project": "TaintedGrailAccess.Runtime.Tests",
+      "phase": "run",
+      "exit_code": 0,
+      "output": "Runtime: пройдено 31; ошибок 0.\nПроверены правила интерфейса; интеграция с запущенной игрой этими тестами не проверяется."
+    },
+    {
+      "project": "TaintedGrailAccess.Windows.Tests",
+      "phase": "compile",
+      "exit_code": 0,
+      "reference_target": "net8.0"
+    },
+    {
+      "project": "TaintedGrailAccess.Windows.Tests",
+      "phase": "run",
+      "exit_code": 0,
+      "output": "PASS Windows safe-failure suite: 15 assertions. Native speech and the game were not tested."
+    },
+    {
+      "project": "python",
+      "phase": "run",
+      "exit_code": 0,
+      "output": ".....................\n----------------------------------------------------------------------\nRan 21 tests in 0.022s\n\nOK"
+    }
+  ]
+}

@@ -1,0 +1,495 @@
+{
+  "schema_version": 1,
+  "reviewed_on": "2026-10-12",
+  "archive": "Accessibility-mod-template-Codex-edition-master.zip",
+  "archive_sha256": "68e3ee2e4096840ba2c06ecc08301acd43aef7a431c81993cce9c719bbd3d64f",
+  "upstream_commit": null,
+  "file_count": 45,
+  "files": [
+    {
+      "path": ".github/workflows/sync-upstream.yml",
+      "bytes": 13608,
+      "sha256": "ecb65a3edbedd110887110375ea12b1ce4d0b1868d234d23662d20c2e2776fff",
+      "handling": "excluded",
+      "destinations": [
+        "docs/GIT_AND_GITHUB.md"
+      ],
+      "reason": "Workflow синхронизации шаблона не установлен."
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 402,
+      "sha256": "7b728a331361006ed0788790855d74ab048b338f320a009d7748cf237b6acb98",
+      "handling": "adapted",
+      "destinations": [
+        ".gitignore"
+      ],
+      "reason": "Игнорирование сборок, местных файлов, архивов и личных данных."
+    },
+    {
+      "path": "Accessibility-Mod-Template/.editorconfig",
+      "bytes": 1474,
+      "sha256": "acd4fac3d77d5d0e1d4af47894b2f673ec97a813d7ec15da6cbc9efd1e022d3d",
+      "handling": "covered",
+      "destinations": [
+        ".editorconfig",
+        "docs/DEVELOPMENT_GUIDE.md"
+      ],
+      "reason": "Сохраняются соглашения существующего проекта, не заменяются настройками шаблона."
+    },
+    {
+      "path": "Accessibility-Mod-Template/.gitignore",
+      "bytes": 319,
+      "sha256": "5fae14ad69f5e4033d5d5c797079080d180e7ed563d06eeed41a28792b864801",
+      "handling": "adapted",
+      "destinations": [
+        ".gitignore"
+      ],
+      "reason": "Дополнена защита от декомпиляции, секретов и местных артефактов."
+    },
+    {
+      "path": "Accessibility-Mod-Template/AGENTS.md",
+      "bytes": 4501,
+      "sha256": "bfb3d5fa416d4131eefa7256d6c98a5f3dde725a67510e17852cf0677d338c18",
+      "handling": "adapted",
+      "destinations": [
+        "AGENTS.md",
+        "docs/DEVELOPMENT_GUIDE.md"
+      ],
+      "reason": "Полезные правила адаптированы; чужие пути, анкета, принудительная остановка и конфликты исключены."
+    },
+    {
+      "path": "Accessibility-Mod-Template/CLAUDE.de.md",
+      "bytes": 5406,
+      "sha256": "fecfe3f0fb93ea1f7f44d2bd9d79823033e43fc44791c51f4904bc10dc8a1118",
+      "handling": "adapted",
+      "destinations": [
+        "AGENTS.md",
+        "docs/DEVELOPMENT_GUIDE.md"
+      ],
+      "reason": "Немецкий вариант рассмотрен; отдельный конкурирующий файл инструкций не создавался."
+    },
+    {
+      "path": "Accessibility-Mod-Template/docs/ACCESSIBILITY_MODDING_GUIDE.md",
+      "bytes": 26359,
+      "sha256": "a9fbfa862b552754e0c320b0c5e0396cc3e02d353d40859eb5f46635378d29a1",
+      "handling": "adapted",
+      "destinations": [
+        "docs/DEVELOPMENT_GUIDE.md",
+        "docs/MENU_ACCESSIBILITY.md",
+        "docs/LOCALIZATION.md",
+        "docs/DIAGNOSTICS.md"
+      ],
+      "reason": "Полезные инструкции переработаны для Graph A11y/Conquest; конфликты и непроверенные API исключены."
+    },
+    {
+      "path": "Accessibility-Mod-Template/docs/distribution-guide.md",
+      "bytes": 11139,
+      "sha256": "0ca15122cda031e78f32ac66a950bfe4a16bbdde931c69a3f1182333fa5a6f6e",
+      "handling": "adapted",
+      "destinations": [
+        "docs/RELEASE_GUIDE.md",
+        "THIRD_PARTY_NOTICES.md",
+        "CHANGELOG.md"
+      ],
+      "reason": "Полезные инструкции переработаны для Graph A11y/Conquest; конфликты и непроверенные API исключены."
+    },
+    {
+      "path": "Accessibility-Mod-Template/docs/git-github-guide.md",
+      "bytes": 7170,
+      "sha256": "454e019ba26a6e99d268be4651457ed263e7edc6ce182618cae70f23326f7a82",
+      "handling": "adapted",
+      "destinations": [
+        "docs/GIT_AND_GITHUB.md",
+        ".gitignore",
+        ".gitattributes"
+      ],
+      "reason": "Полезные инструкции переработаны для Graph A11y/Conquest; конфликты и непроверенные API исключены."
+    },
+    {
+      "path": "Accessibility-Mod-Template/docs/known-issues.md",
+      "bytes": 2152,
+      "sha256": "e085167f6c9381c3bdd63ba68049a07f3caec4bd3644525f27187808ef6fe6b8",
+      "handling": "adapted",
+      "destinations": [
+        "docs/DIAGNOSTICS.md",
+        "docs/PROJECT_STATUS.md"
+      ],
+      "reason": "Полезные инструкции переработаны для Graph A11y/Conquest; конфликты и непроверенные API исключены."
+    },
+    {
+      "path": "Accessibility-Mod-Template/docs/legacy-unity-modding.md",
+      "bytes": 4526,
+      "sha256": "25559fc762e8e1c170f1eb77165af696301b1109a3da734fbc5f03c4c3db5fce",
+      "handling": "adapted",
+      "destinations": [
+        "docs/DIAGNOSTICS.md",
+        "docs/research/template-import.md"
+      ],
+      "reason": "Полезные инструкции переработаны для Graph A11y/Conquest; конфликты и непроверенные API исключены."
+    },
+    {
+      "path": "Accessibility-Mod-Template/docs/localization-guide.md",
+      "bytes": 13267,
+      "sha256": "f63970c6e81c4e61de9d883d29d899e064c8a7cb04ebc789c722b57933c2d9d8",
+      "handling": "adapted",
+      "destinations": [
+        "docs/LOCALIZATION.md"
+      ],
+      "reason": "Полезные инструкции переработаны для Graph A11y/Conquest; конфликты и непроверенные API исключены."
+    },
+    {
+      "path": "Accessibility-Mod-Template/docs/menu-accessibility-checklist.md",
+      "bytes": 3093,
+      "sha256": "7b30d0a10aa153d694ed6c96a3410ec26684442c6e38a664cb740eeac5ddf57d",
+      "handling": "adapted",
+      "destinations": [
+        "docs/MENU_ACCESSIBILITY.md"
+      ],
+      "reason": "Полезные инструкции переработаны для Graph A11y/Conquest; конфликты и непроверенные API исключены."
+    },
+    {
+      "path": "Accessibility-Mod-Template/docs/menu-accessibility-patterns.md",
+      "bytes": 8275,
+      "sha256": "3c5a242df72788e9513260612d2faefa3d38d936a4ef81cbe19f6efab8d4ba08",
+      "handling": "adapted",
+      "destinations": [
+        "docs/MENU_ACCESSIBILITY.md"
+      ],
+      "reason": "Полезные инструкции переработаны для Graph A11y/Conquest; конфликты и непроверенные API исключены."
+    },
+    {
+      "path": "Accessibility-Mod-Template/docs/setup-guide.md",
+      "bytes": 76192,
+      "sha256": "27177e14d1b3c5ab0aca54cbbfa1c864dc700dce2dc111912e2c45151a6755e7",
+      "handling": "adapted",
+      "destinations": [
+        "docs/DEVELOPMENT_GUIDE.md",
+        "docs/GAME_API.md",
+        "docs/PROJECT_STATUS.md"
+      ],
+      "reason": "Полезные инструкции переработаны для Graph A11y/Conquest; конфликты и непроверенные API исключены."
+    },
+    {
+      "path": "Accessibility-Mod-Template/docs/state-management-guide.md",
+      "bytes": 11568,
+      "sha256": "a42fbde17b6909b7357c29ebc634a7890713644ee4eb7b60a66f436b57e13b20",
+      "handling": "adapted",
+      "destinations": [
+        "docs/DEVELOPMENT_GUIDE.md",
+        "docs/MENU_ACCESSIBILITY.md"
+      ],
+      "reason": "Полезные инструкции переработаны для Graph A11y/Conquest; конфликты и непроверенные API исключены."
+    },
+    {
+      "path": "Accessibility-Mod-Template/docs/technical-reference.md",
+      "bytes": 15607,
+      "sha256": "76631fb2316b3a9ac34bd73ec3e5fe09b29ce9c922cc6f0ea4a0f64215197c14",
+      "handling": "adapted",
+      "destinations": [
+        "docs/DIAGNOSTICS.md",
+        "docs/DEVELOPMENT_GUIDE.md"
+      ],
+      "reason": "Полезные инструкции переработаны для Graph A11y/Conquest; конфликты и непроверенные API исключены."
+    },
+    {
+      "path": "Accessibility-Mod-Template/docs/unity-reflection-guide.md",
+      "bytes": 6169,
+      "sha256": "c33aaf19424951fdd7b141157d5a7b1849f1540ac3a0fa8d5bb06c691abdfc99",
+      "handling": "adapted",
+      "destinations": [
+        "docs/DIAGNOSTICS.md",
+        "docs/GAME_API.md"
+      ],
+      "reason": "Полезные инструкции переработаны для Graph A11y/Conquest; конфликты и непроверенные API исключены."
+    },
+    {
+      "path": "Accessibility-Mod-Template/docs-de/setup-guide.md",
+      "bytes": 45551,
+      "sha256": "954ec18159be79ff4829f2ba96352068e0a6dfdfdd03358e04abd4fa7b835c3f",
+      "handling": "covered",
+      "destinations": [
+        "docs/DEVELOPMENT_GUIDE.md",
+        "docs/GAME_API.md",
+        "docs/PROJECT_STATUS.md"
+      ],
+      "reason": "Немецкая версия тех же требований; отдельная копия не нужна."
+    },
+    {
+      "path": "Accessibility-Mod-Template/docs-de/technical-reference.md",
+      "bytes": 15498,
+      "sha256": "4549a9ad60accb60e0a0cc30fdd8947ae942c58075f6169aa52a7da7d7f9c61b",
+      "handling": "covered",
+      "destinations": [
+        "docs/DIAGNOSTICS.md",
+        "docs/DEVELOPMENT_GUIDE.md"
+      ],
+      "reason": "Немецкая версия тех же требований; отдельная копия не нужна."
+    },
+    {
+      "path": "Accessibility-Mod-Template/scripts/Get-MelonLoaderInfo.ps1",
+      "bytes": 4661,
+      "sha256": "a65fe2d7b4bf39e089a6813ec6ad11069b1557297386a9831d718c5ee3cbb2c5",
+      "handling": "covered",
+      "destinations": [
+        "docs/GAME_DISCOVERY.md",
+        "docs/DIAGNOSTICS.md"
+      ],
+      "reason": "Сбор версии и проверка окружения покрываются текущими инструментами; MelonLoader-скрипт не запускался."
+    },
+    {
+      "path": "Accessibility-Mod-Template/scripts/Test-ModSetup.ps1",
+      "bytes": 11339,
+      "sha256": "bb1f7d837653408563591f9722669c340c349a6e1d41097fc1bd4ed68a9d4ca4",
+      "handling": "covered",
+      "destinations": [
+        "docs/GAME_DISCOVERY.md",
+        "docs/DIAGNOSTICS.md"
+      ],
+      "reason": "Сбор версии и проверка окружения покрываются текущими инструментами; MelonLoader-скрипт не запускался."
+    },
+    {
+      "path": "Accessibility-Mod-Template/templates/bepinex/csproj.template",
+      "bytes": 3347,
+      "sha256": "b67963cc891f1d4c62c9ab5d475ad38b54a6a0850445a75026257586317637d5",
+      "handling": "covered",
+      "destinations": [
+        "docs/DEVELOPMENT_GUIDE.md",
+        "docs/BUILD_AND_INSTALL.md"
+      ],
+      "reason": "Полезные требования отражены в инструкциях; код шаблона и второй framework не копировались."
+    },
+    {
+      "path": "Accessibility-Mod-Template/templates/bepinex/DebugLogger.cs.template",
+      "bytes": 4111,
+      "sha256": "d3057983003c0b63e9b27581ebdde2ae8c95fb770a1feb6c65e9b1d63efb053c",
+      "handling": "covered",
+      "destinations": [
+        "docs/DIAGNOSTICS.md"
+      ],
+      "reason": "Полезные требования отражены в инструкциях; код шаблона и второй framework не копировались."
+    },
+    {
+      "path": "Accessibility-Mod-Template/templates/bepinex/Main.cs.template",
+      "bytes": 6201,
+      "sha256": "608a4480bca92539dd785c6baa463208aeea1b9545198a0585b9f642a8b4216b",
+      "handling": "covered",
+      "destinations": [
+        "docs/DEVELOPMENT_GUIDE.md",
+        "docs/DIAGNOSTICS.md"
+      ],
+      "reason": "Полезные требования отражены в инструкциях; код шаблона и второй framework не копировались."
+    },
+    {
+      "path": "Accessibility-Mod-Template/templates/bepinex/ModConfig.cs.template",
+      "bytes": 7750,
+      "sha256": "345b1fd804d8ccab8dce0a317f6655febf25a348e8afcf68a153eb7303047a8e",
+      "handling": "covered",
+      "destinations": [
+        "docs/LOCALIZATION.md",
+        "docs/RELEASE_GUIDE.md"
+      ],
+      "reason": "Полезные требования отражены в инструкциях; код шаблона и второй framework не копировались."
+    },
+    {
+      "path": "Accessibility-Mod-Template/templates/bepinex/ScreenReader.cs.template",
+      "bytes": 4933,
+      "sha256": "2b5d1c753333177f21b2148b86fada556dbcf80b9f8ee6cfc9f40e1f4e8eb733",
+      "handling": "covered",
+      "destinations": [
+        "docs/DIAGNOSTICS.md",
+        "docs/BUILD_AND_INSTALL.md"
+      ],
+      "reason": "Полезные требования отражены в инструкциях; код шаблона и второй framework не копировались."
+    },
+    {
+      "path": "Accessibility-Mod-Template/templates/melonloader/csproj.template",
+      "bytes": 3586,
+      "sha256": "93112555f842737e7b7ccf02de06756befd59377c60759fcae3739666c4d7be0",
+      "handling": "covered",
+      "destinations": [
+        "docs/DEVELOPMENT_GUIDE.md",
+        "docs/BUILD_AND_INSTALL.md"
+      ],
+      "reason": "Полезные требования отражены в инструкциях; код шаблона и второй framework не копировались."
+    },
+    {
+      "path": "Accessibility-Mod-Template/templates/melonloader/DebugLogger.cs.template",
+      "bytes": 4125,
+      "sha256": "f4f4fe837624d0ece85f3bd7a7c68973a9d74c0f5d0bee1d92a0f608c6372dbc",
+      "handling": "covered",
+      "destinations": [
+        "docs/DIAGNOSTICS.md"
+      ],
+      "reason": "Полезные требования отражены в инструкциях; код шаблона и второй framework не копировались."
+    },
+    {
+      "path": "Accessibility-Mod-Template/templates/melonloader/Main.cs.template",
+      "bytes": 6014,
+      "sha256": "0c868bebb09920d9d950aa9ddeb03187553dbe35aee64e46aa470560e4273b02",
+      "handling": "covered",
+      "destinations": [
+        "docs/DEVELOPMENT_GUIDE.md",
+        "docs/DIAGNOSTICS.md"
+      ],
+      "reason": "Полезные требования отражены в инструкциях; код шаблона и второй framework не копировались."
+    },
+    {
+      "path": "Accessibility-Mod-Template/templates/melonloader/ModConfig.cs.template",
+      "bytes": 7674,
+      "sha256": "449f69bdd95d121746f01c85c39e912d6882ab1f065dab8fba6a950007a760bc",
+      "handling": "covered",
+      "destinations": [
+        "docs/LOCALIZATION.md",
+        "docs/RELEASE_GUIDE.md"
+      ],
+      "reason": "Полезные требования отражены в инструкциях; код шаблона и второй framework не копировались."
+    },
+    {
+      "path": "Accessibility-Mod-Template/templates/melonloader/ScreenReader.cs.template",
+      "bytes": 4951,
+      "sha256": "914f5e57fdd0b83313f329b4cc2af3085806b439a148f36103daa6409af9a8b3",
+      "handling": "covered",
+      "destinations": [
+        "docs/DIAGNOSTICS.md",
+        "docs/BUILD_AND_INSTALL.md"
+      ],
+      "reason": "Полезные требования отражены в инструкциях; код шаблона и второй framework не копировались."
+    },
+    {
+      "path": "Accessibility-Mod-Template/templates/shared/AccessStateManager.cs.template",
+      "bytes": 7536,
+      "sha256": "963e6cc372fc340cd8c94134b74574d36828511ad3164deabaed59cc09877d3d",
+      "handling": "covered",
+      "destinations": [
+        "docs/MENU_ACCESSIBILITY.md",
+        "docs/DEVELOPMENT_GUIDE.md"
+      ],
+      "reason": "Форма или полезное правило адаптированы; неподтверждённые игровые значения и кодовые примеры не перенесены."
+    },
+    {
+      "path": "Accessibility-Mod-Template/templates/shared/game-api.md.template",
+      "bytes": 7697,
+      "sha256": "a42f3f807465ef277ee746df3b30e2b58a19277b2ad2a199f737bd5e9fa0017f",
+      "handling": "adapted",
+      "destinations": [
+        "docs/GAME_API.md"
+      ],
+      "reason": "Форма или полезное правило адаптированы; неподтверждённые игровые значения и кодовые примеры не перенесены."
+    },
+    {
+      "path": "Accessibility-Mod-Template/templates/shared/Handler.cs.template",
+      "bytes": 6849,
+      "sha256": "8637036dcc6e3538f0c02a60ae9dc622906dc129e9bc768f0ebb8bf497a9d09b",
+      "handling": "covered",
+      "destinations": [
+        "docs/DEVELOPMENT_GUIDE.md",
+        "docs/MENU_ACCESSIBILITY.md"
+      ],
+      "reason": "Форма или полезное правило адаптированы; неподтверждённые игровые значения и кодовые примеры не перенесены."
+    },
+    {
+      "path": "Accessibility-Mod-Template/templates/shared/Loc.cs.template",
+      "bytes": 5298,
+      "sha256": "ba5da41fb1090fb343f17b8aff972f1e67be6502211c28a36c6fcaa454f4cf9d",
+      "handling": "covered",
+      "destinations": [
+        "docs/LOCALIZATION.md"
+      ],
+      "reason": "Форма или полезное правило адаптированы; неподтверждённые игровые значения и кодовые примеры не перенесены."
+    },
+    {
+      "path": "Accessibility-Mod-Template/templates/shared/project_status.md.template",
+      "bytes": 4123,
+      "sha256": "4807e4a415974c3ed14ec540faa21752796a91ef9b23e729d8319cea881cc7ff",
+      "handling": "adapted",
+      "destinations": [
+        "docs/PROJECT_STATUS.md"
+      ],
+      "reason": "Форма или полезное правило адаптированы; неподтверждённые игровые значения и кодовые примеры не перенесены."
+    },
+    {
+      "path": "Accessibility-Mod-Template/templates/shared/ReflectionHelper.cs.template",
+      "bytes": 5068,
+      "sha256": "0bc778fb4717675563abad318d6d201099175c5fd1fef62acc4774a2db64067e",
+      "handling": "covered",
+      "destinations": [
+        "docs/DIAGNOSTICS.md"
+      ],
+      "reason": "Форма или полезное правило адаптированы; неподтверждённые игровые значения и кодовые примеры не перенесены."
+    },
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 4114,
+      "sha256": "c3966f116213cb9da0f929b4abc687d954e547869aeb7e33adafde0775023977",
+      "handling": "covered",
+      "destinations": [
+        "CHANGELOG.md",
+        "docs/RELEASE_GUIDE.md"
+      ],
+      "reason": "Правило ведения изменений принято; история чужого проекта не выдаётся за свою."
+    },
+    {
+      "path": "CONTRIBUTING",
+      "bytes": 1556,
+      "sha256": "0b4fb1541c6362f68effe7327af83e57fc64cf8964d1de398dded45bb8497002",
+      "handling": "adapted",
+      "destinations": [
+        "CONTRIBUTING.md"
+      ],
+      "reason": "Понятные предложения и ошибки; обращение к другим людям только по поручению."
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 690,
+      "sha256": "980b8eb3c20ecfa33d38d58a2a0dc45612010b86888343f0007973fdc3a2269c",
+      "handling": "preserved",
+      "destinations": [
+        "docs/licenses/accessibility-mod-template-CC-BY-4.0.txt",
+        "THIRD_PARTY_NOTICES.md"
+      ],
+      "reason": "Сохранён исходный текст CC BY 4.0 и авторство."
+    },
+    {
+      "path": "README.md",
+      "bytes": 10951,
+      "sha256": "639ee1e6106d46979c8db6f29b5863cc71dbd50f84b11346febfcd7f2b064ed3",
+      "handling": "adapted",
+      "destinations": [
+        "docs/DEVELOPMENT_GUIDE.md",
+        "docs/research/template-import.md"
+      ],
+      "reason": "Происхождение и ведение документации; установка Codex и повторное создание проекта не нужны."
+    },
+    {
+      "path": "scripts/apply-codex-fork-customizations.ps1",
+      "bytes": 14223,
+      "sha256": "347562cddbd2eb979507fee805dbaa60685d48aca9f8cd598a3673eea7ce545a",
+      "handling": "excluded",
+      "destinations": [
+        "docs/research/template-import.md"
+      ],
+      "reason": "Переписывает файлы шаблона; не запускался и не устанавливался."
+    },
+    {
+      "path": "scripts/README.md",
+      "bytes": 2684,
+      "sha256": "658e257e67d6cb71b09ce9c03300d5bb1780b9f1e2cf4f6f588ddd3aa2295753",
+      "handling": "excluded",
+      "destinations": [
+        "docs/research/template-import.md"
+      ],
+      "reason": "Инструкция синхронизации fork шаблона не относится к самостоятельному проекту."
+    },
+    {
+      "path": "scripts/sync-upstream.ps1",
+      "bytes": 6178,
+      "sha256": "82e82f2972d57b6df1c448f735dc79ec1d0f6342a6d7d123364e8cec6b6ab1be",
+      "handling": "excluded",
+      "destinations": [
+        "docs/GIT_AND_GITHUB.md"
+      ],
+      "reason": "Автоматическое слияние upstream шаблона не поручено и не подходит проекту."
+    }
+  ]
+}
