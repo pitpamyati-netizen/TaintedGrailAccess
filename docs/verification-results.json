@@ -1,70 +1,88 @@
 {
+  "schema_version": 3,
+  "date": "2026-10-12",
   "success": true,
-  "sdk": "8.0.425",
-  "method": "Direct SDK Roslyn compiler, separate assemblies",
+  "platform": "Windows x64",
+  "sdk": "10.0.301",
+  "method": "scripts/test.ps1 and scripts/build.ps1; MSBuild",
   "production_reference_check": true,
+  "production_target": "netstandard2.0",
+  "test_runtime": "8.0.20",
   "game_tested": false,
+  "game_test_scope": "Not run for 0.1.2; see historical_game_validation for 0.1.1",
   "native_speech_tested": false,
+  "native_speech_scope": "Not run for 0.1.2",
+  "historical_game_validation": {
+    "plugin": "0.1.1",
+    "game_tested": true,
+    "scope": "Plugin load, passive PressStart shown/hidden and one visible text read",
+    "nvda_user_confirmed": ["startup-speech", "start-screen-name-and-visible-prompt"],
+    "input_arbitration_verified": false,
+    "full_path_accepted": false,
+    "installation_and_backup_verified": true,
+    "interrupted_rollback_tested": false
+  },
+  "game": {
+    "unity_version": "2020.3.23f1",
+    "backend": "Mono",
+    "loader": "BepInEx 5.4.23.5",
+    "plugin": "0.1.2",
+    "architecture": "x64",
+    "build_id": "59087960036481007",
+    "application_version": "1.61",
+    "storefront": "GOG"
+  },
+  "levels": {
+    "input_arbitration_verified": false,
+    "in_game_tested": [],
+    "portable_tested": true,
+    "full_path_accepted": false,
+    "implemented": [
+      "passive-start-prompt",
+      "live-text-provider",
+      "exact-TG.Main-fingerprint-guard",
+      "keyboard-snapshot-tracker",
+      "bounded-opt-in-title-input-audit"
+    ],
+    "compiled_with_game": true,
+    "blind_user_accepted": [],
+    "game_actions_enabled": false
+  },
   "results": [
     {
-      "project": "TaintedGrailAccess.Graph",
-      "phase": "compile",
-      "exit_code": 0,
-      "reference_target": "netstandard2.0"
+      "failed": 0,
+      "project": "Graph",
+      "passed": 94,
+      "phase": "run"
     },
     {
-      "project": "TaintedGrailAccess.Runtime",
-      "phase": "compile",
-      "exit_code": 0,
-      "reference_target": "netstandard2.0"
+      "failed": 0,
+      "project": "Runtime",
+      "passed": 45,
+      "phase": "run"
     },
     {
-      "project": "TaintedGrailAccess.Windows",
-      "phase": "compile",
-      "exit_code": 0,
-      "reference_target": "netstandard2.0"
+      "assertions": 15,
+      "project": "Windows",
+      "failed": 0,
+      "phase": "run"
     },
     {
-      "project": "TaintedGrailAccess.Graph.Tests",
-      "phase": "compile",
-      "exit_code": 0,
-      "reference_target": "net8.0"
+      "failed": 0,
+      "project": "Python inventory",
+      "passed": 21,
+      "phase": "run"
     },
     {
-      "project": "TaintedGrailAccess.Graph.Tests",
-      "phase": "run",
-      "exit_code": 0,
-      "output": "Graph kernel: 94 passed; 0 failed."
+      "project": "BepInEx host",
+      "warnings": 0,
+      "phase": "compile-with-game",
+      "exit_code": 0
     },
     {
-      "project": "TaintedGrailAccess.Runtime.Tests",
-      "phase": "compile",
-      "exit_code": 0,
-      "reference_target": "net8.0"
-    },
-    {
-      "project": "TaintedGrailAccess.Runtime.Tests",
-      "phase": "run",
-      "exit_code": 0,
-      "output": "Runtime: пройдено 31; ошибок 0.\nПроверены правила интерфейса; интеграция с запущенной игрой этими тестами не проверяется."
-    },
-    {
-      "project": "TaintedGrailAccess.Windows.Tests",
-      "phase": "compile",
-      "exit_code": 0,
-      "reference_target": "net8.0"
-    },
-    {
-      "project": "TaintedGrailAccess.Windows.Tests",
-      "phase": "run",
-      "exit_code": 0,
-      "output": "PASS Windows safe-failure suite: 15 assertions. Native speech and the game were not tested."
-    },
-    {
-      "project": "python",
-      "phase": "run",
-      "exit_code": 0,
-      "output": ".....................\n----------------------------------------------------------------------\nRan 21 tests in 0.022s\n\nOK"
+      "project": "Deployment 0.1.2",
+      "phase": "not-run",
+      "tested": false
     }
   ]
 }

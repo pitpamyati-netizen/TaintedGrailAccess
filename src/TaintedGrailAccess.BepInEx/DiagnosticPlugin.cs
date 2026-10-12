@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -13,14 +12,16 @@ using UnityEngine;
 namespace TaintedGrailAccess.BepInExHost
 {
     /// <summary>
-    /// Diagnostic bootstrap only. Deliberately registers no Harmony patches, input hooks,
-    /// generic UI scanner or invented game adapter. Speech success is not game accessibility.
+    /// Diagnostic bootstrap, passive start reader and opt-in input observation.
+    /// No suppression or game actions. Speech success is not complete game accessibility.
     /// </summary>
-    [BepInPlugin("org.taintedgrailaccess.diagnostics", "Tainted Grail Access Diagnostics", "0.1.0")]
+    [BepInPlugin("org.taintedgrailaccess.diagnostics", "Tainted Grail Access Diagnostics", "0.1.2")]
     public sealed class DiagnosticPlugin : BaseUnityPlugin
     {
         private WindowsSpeechOutput _speech;
         private DiagnosticLog _log;
+        private StartPromptReader _startPrompt;
+        private GameInputAudit _inputAudit;
         private bool _startupPending;
         private string _startupText;
         private bool _booted;
@@ -34,7 +35,11 @@ namespace TaintedGrailAccess.BepInExHost
                 var directory = Path.Combine(Path.GetDirectoryName(typeof(DiagnosticPlugin).Assembly.Location), "diagnostics");
                 _log = new DiagnosticLog(Logger, directory);
                 var language = Config.Bind("General", "Language", "ru", "Diagnostic announcements: ru or en.").Value;
-                _startupText = HostStrings.Get(language, "startup");
+                var locale = (language ?? "ru").Split('-', '_')[0];
+                if (locale != "en") locale = "ru";
+                var text = Localizer.Load(Path.Combine(Path.GetDirectoryName(typeof(DiagnosticPlugin).Assembly.Location),
+                    "locales", locale + ".properties"));
+                _startupText = text.Get("startup.diagnostic");
                 var options = new SpeechOptions
                 {
                     Backend = Config.Bind("Speech", "Backend", "auto", "auto, nvda, tolk, sapi or transcript.").Value,
@@ -42,7 +47,7 @@ namespace TaintedGrailAccess.BepInExHost
                     TolkDllPath = Config.Bind("Speech", "TolkDllPath", "", "Optional absolute local x64 Tolk.dll path. JAWS needs its Tolk backend and live testing.").Value,
                     AllowSapiFallback = Config.Bind("Speech", "AllowSapiFallback", true, "Use an installed Windows SAPI voice when the selected screen reader bridge is unavailable.").Value
                 };
-                _log.Write("host.status", "DIAGNOSTIC_ONLY; no game adapter, navigation or input patches are installed.");
+                _log.Write("host.status", "DIAGNOSTIC_BOOTSTRAP; no input suppression or game actions are installed.");
                 _log.Write("host.game", "Product=" + Application.productName + "; Version=" + Application.version +
                     "; Unity=" + Application.unityVersion + "; ProcessBits=" + (IntPtr.Size * 8).ToString(CultureInfo.InvariantCulture));
                 _log.Write("host.loader", typeof(BaseUnityPlugin).Assembly.GetName().FullName);
@@ -63,6 +68,38 @@ namespace TaintedGrailAccess.BepInExHost
                     }
                     finally { export.Value = false; Config.Save(); }
                 }
+                var readPrompt = Config.Bind("Accessibility", "ReadStartPrompt", true,
+                    "Read only the visible Press Any Button prompt on the inspected GOG 1.61 build. No keyboard capture or menu actions.");
+                if (readPrompt.Value)
+                {
+                    try
+                    {
+                        _startPrompt = new StartPromptReader(_speech, text, _log);
+                        _startupText = text.Get("startup.promptPreview");
+                    }
+                    catch (Exception exception)
+                    {
+                        _log.Write("binding.press-start.disabled", exception.GetType().Name + ": " + exception.Message);
+                    }
+                }
+                var auditInput = Config.Bind("Diagnostics", "ObserveTitleInput", false,
+                    "Opt-in bounded observation of title input on inspected GOG 1.61. No key suppression, text capture or actions. Resets after this launch.");
+                if (auditInput.Value)
+                {
+                    // Reset also after an unsupported-build attempt; never leave a recorder
+                    // active across later launches without an explicit diagnostic request.
+                    auditInput.Value = false;
+                    Config.Save();
+                    try
+                    {
+                        _inputAudit = new GameInputAudit(_log);
+                        _startupText += " " + text.Get("diagnostic.inputAudit");
+                    }
+                    catch (Exception exception)
+                    {
+                        _log.Write("binding.input-audit.disabled", exception.GetType().Name + ": " + exception.Message);
+                    }
+                }
             }
             catch (Exception exception)
             {
@@ -82,39 +119,23 @@ namespace TaintedGrailAccess.BepInExHost
 
         private void OnApplicationFocus(bool focused)
         {
+            _inputAudit?.OnWindowFocusChanged(focused);
             if (!focused) _speech?.Stop();
         }
 
         private void OnDestroy()
         {
             _startupPending = false;
+            try { _inputAudit?.Dispose(); }
+            catch (Exception exception) { Logger.LogWarning("Input observer cleanup failed: " + exception.Message); }
+            _inputAudit = null;
+            try { _startPrompt?.Dispose(); }
+            catch (Exception exception) { Logger.LogWarning("Start reader cleanup failed: " + exception.Message); }
+            _startPrompt = null;
             _speech?.Dispose();
             _speech = null;
             _log?.Dispose();
             _log = null;
-        }
-    }
-
-    internal static class HostStrings
-    {
-        private static readonly Dictionary<string, Dictionary<string, string>> Strings =
-            new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["ru"] = new Dictionary<string, string>
-                {
-                    ["startup"] = "Tainted Grail Access. Диагностическая версия проекта. Проверка речи запущена. Доступность игровых экранов ещё не подключена."
-                },
-                ["en"] = new Dictionary<string, string>
-                {
-                    ["startup"] = "Tainted Grail Access. Diagnostic project build. Speech check started. Game screen accessibility is not connected yet."
-                }
-            };
-
-        public static string Get(string language, string key)
-        {
-            var code = (language ?? "ru").Split('-', '_')[0];
-            if (!Strings.TryGetValue(code, out var table)) table = Strings["ru"];
-            return table[key];
         }
     }
 

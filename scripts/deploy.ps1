@@ -118,7 +118,7 @@ function Get-DiagnosticReferences([string]$GamePath, [string]$ManifestPath, [boo
     if ($exe.Count -ne 1 -or $exe[0].binary.architecture -ne 'x64') { throw 'Нужен подтверждённый PE x64 исполняемый файл игры.' }
     $managed = Join-Path $game ($inventory.layout.selected_data_directory + '\Managed')
     Assert-NoReparsePath $managed
-    foreach ($name in @('mscorlib.dll', 'UnityEngine.CoreModule.dll')) {
+    foreach ($name in @('mscorlib.dll', 'UnityEngine.CoreModule.dll', 'UnityEngine.UIModule.dll', 'UnityEngine.InputLegacyModule.dll', 'UnityEngine.IMGUIModule.dll')) {
         $path = Join-Path $managed $name
         Assert-NoReparsePath $path
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Нет локальной ссылки сборки: $name" }
@@ -136,6 +136,10 @@ function Get-DiagnosticReferences([string]$GamePath, [string]$ManifestPath, [boo
             unity_core = (Get-FileHash -LiteralPath (Join-Path $managed 'UnityEngine.CoreModule.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
             framework = (Get-FileHash -LiteralPath (Join-Path $managed 'mscorlib.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
             bepinex = (Get-FileHash -LiteralPath $bepCore -Algorithm SHA256).Hash.ToLowerInvariant()
+            harmony = (Get-FileHash -LiteralPath (Join-Path $bep 'core\0Harmony.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
+            unity_ui = (Get-FileHash -LiteralPath (Join-Path $managed 'UnityEngine.UIModule.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
+            unity_input = (Get-FileHash -LiteralPath (Join-Path $managed 'UnityEngine.InputLegacyModule.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
+            unity_imgui = (Get-FileHash -LiteralPath (Join-Path $managed 'UnityEngine.IMGUIModule.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
         }
     }
 }
@@ -252,7 +256,7 @@ function Get-DiagnosticPackage {
 }
 
 function Assert-MatchingReferences($Package, $References) {
-    foreach ($key in @('game_executable', 'unity_core', 'framework', 'bepinex')) {
+    foreach ($key in @('game_executable', 'unity_core', 'framework', 'bepinex', 'harmony', 'unity_ui', 'unity_input', 'unity_imgui')) {
         $expectedHash = [string]$Package.Manifest.reference_sha256.$key
         if ($expectedHash -cnotmatch '^[a-f0-9]{64}$' -or $expectedHash -cne $References.ReferenceHashes[$key]) {
             throw 'Локальные игровые/загрузочные файлы отличаются от использованных при сборке. Соберите Diagnostics заново для выбранной GameDir.'

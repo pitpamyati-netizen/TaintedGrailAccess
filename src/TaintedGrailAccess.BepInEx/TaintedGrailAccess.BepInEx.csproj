@@ -5,6 +5,7 @@
     <Nullable>disable</Nullable>
     <AssemblyName>TaintedGrailAccess.BepInEx</AssemblyName>
     <RootNamespace>TaintedGrailAccess.BepInExHost</RootNamespace>
+    <Version>0.1.2</Version>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
@@ -12,6 +13,10 @@
     <ProjectReference Include="../TaintedGrailAccess.Runtime/TaintedGrailAccess.Runtime.csproj" />
     <Reference Include="BepInEx">
       <HintPath>$(BepInExDir)/core/BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(BepInExDir)/core/0Harmony.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine" Condition="Exists('$(GameManagedDir)/UnityEngine.dll')">
@@ -22,6 +27,18 @@
       <HintPath>$(GameManagedDir)/UnityEngine.CoreModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>$(GameManagedDir)/UnityEngine.UIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(GameManagedDir)/UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(GameManagedDir)/UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
   <Target Name="ValidateLocalGameReferences" BeforeTargets="ResolveReferences">
     <Error Condition="'$(BepInExDir)' == '' Or !Exists('$(BepInExDir)/core/BepInEx.dll')"
@@ -30,5 +47,9 @@
            Text="Set GameManagedDir to this game's local *_Data/Managed directory containing UnityEngine.CoreModule.dll. Verify Mono first; this host does not support IL2CPP." />
     <Error Condition="!Exists('$(GameManagedDir)/mscorlib.dll')"
            Text="The supplied Managed directory has no mscorlib.dll. Verify the game's actual scripting backend before building this Mono host." />
+    <Error Condition="!Exists('$(BepInExDir)/core/0Harmony.dll') Or !Exists('$(GameManagedDir)/UnityEngine.UIModule.dll')"
+           Text="The passive prompt reader requires local 0Harmony.dll and UnityEngine.UIModule.dll. Do not substitute invented host types." />
+    <Error Condition="!Exists('$(GameManagedDir)/UnityEngine.InputLegacyModule.dll') Or !Exists('$(GameManagedDir)/UnityEngine.IMGUIModule.dll')"
+           Text="The optional input observer requires this game's UnityEngine.InputLegacyModule.dll and UnityEngine.IMGUIModule.dll. These references are not copied into the package." />
   </Target>
 </Project>

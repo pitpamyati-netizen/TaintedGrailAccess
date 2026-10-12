@@ -118,7 +118,7 @@ function Get-DiagnosticReferences([string]$GamePath, [string]$ManifestPath, [boo
     if ($exe.Count -ne 1 -or $exe[0].binary.architecture -ne 'x64') { throw 'Нужен подтверждённый PE x64 исполняемый файл игры.' }
     $managed = Join-Path $game ($inventory.layout.selected_data_directory + '\Managed')
     Assert-NoReparsePath $managed
-    foreach ($name in @('mscorlib.dll', 'UnityEngine.CoreModule.dll')) {
+    foreach ($name in @('mscorlib.dll', 'UnityEngine.CoreModule.dll', 'UnityEngine.UIModule.dll', 'UnityEngine.InputLegacyModule.dll', 'UnityEngine.IMGUIModule.dll')) {
         $path = Join-Path $managed $name
         Assert-NoReparsePath $path
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Нет локальной ссылки сборки: $name" }
@@ -136,6 +136,10 @@ function Get-DiagnosticReferences([string]$GamePath, [string]$ManifestPath, [boo
             unity_core = (Get-FileHash -LiteralPath (Join-Path $managed 'UnityEngine.CoreModule.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
             framework = (Get-FileHash -LiteralPath (Join-Path $managed 'mscorlib.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
             bepinex = (Get-FileHash -LiteralPath $bepCore -Algorithm SHA256).Hash.ToLowerInvariant()
+            harmony = (Get-FileHash -LiteralPath (Join-Path $bep 'core\0Harmony.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
+            unity_ui = (Get-FileHash -LiteralPath (Join-Path $managed 'UnityEngine.UIModule.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
+            unity_input = (Get-FileHash -LiteralPath (Join-Path $managed 'UnityEngine.InputLegacyModule.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
+            unity_imgui = (Get-FileHash -LiteralPath (Join-Path $managed 'UnityEngine.IMGUIModule.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
         }
     }
 }
@@ -154,7 +158,7 @@ try {
     }
     $dotnet = Get-Command dotnet -CommandType Application -ErrorAction Stop | Select-Object -First 1
     Invoke-LoggedTool $dotnet.Source @('--list-sdks') (Join-Path $logs 'sdk.log')
-    if (-not (Select-String -LiteralPath (Join-Path $logs 'sdk.log') -Pattern '^8\.' -Quiet)) { throw 'Нужен установленный .NET 8 SDK.' }
+    if (-not (Select-String -LiteralPath (Join-Path $logs 'sdk.log') -Pattern '^(?:[89]|[1-9][0-9]+)\.' -Quiet)) { throw 'Нужен установленный .NET SDK версии 8 или новее.' }
     $references = $null
     if ($Target -eq 'Diagnostics') { $references = Get-DiagnosticReferences $GameDir $AppManifest ([bool]$NonSteam) $logs }
     $projectName = if ($Target -eq 'Diagnostics') { 'TaintedGrailAccess.BepInEx' } else { 'TaintedGrailAccess.Windows' }

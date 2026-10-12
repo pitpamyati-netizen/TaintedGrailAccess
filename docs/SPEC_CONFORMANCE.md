@@ -17,10 +17,10 @@
 | A2: immediate mode | Rerender перед операциями, новый builder; mutation tests | Живое чтение игры — интеграция |
 | A3: identity, не render reference | ControlId; reference/structural/backward survivor tests | Domain id конкретной карты нужно найти |
 | A4: announce once | Navigator.AnnounceLanding, differ/direct memory; speech/sound-failure tests | Игровые hooks не должны добавлять сторонние focus Speak |
-| A5: оригинальные handlers | Vtable invokers; scope model | Все игровые action bindings пока отсутствуют |
-| A6: видимость как у зрячего | Обязательные правила discovery и coverage | Фильтр видимости Conquest не реализован, это blocker |
+| A5: оригинальные handlers | Vtable invokers; scope model | Игровые action bindings выключены; passive PressStart не вызывает действия |
+| A6: видимость как у зрячего | PressStartReader проверяет model/view/text/Canvas, анимацию и блокирующий PopupUI | Проверено только чтение стартовой подсказки GOG 1.61; другие экраны остаются blocker |
 | A7: provenance речи | Interrupt для прямого input, queue для differ/Live | Native очереди нужно проверить с настоящим NVDA |
-| A8: локализация | Localizer и таблицы ru/en, separate startup table | Игровые строки и семантика icon text — интеграция |
+| A8: локализация | Localizer и таблицы ru/en, включая стартовые сообщения | PressStart передаёт текущий игровой текст; семантика icon text ещё требует интеграции |
 | P1–P9 | Подробная таблица в ARCHITECTURE.md | Особо P4: ownership model не заменяет физические hooks |
 
 ## Ядро: разделы 3–6
@@ -78,9 +78,9 @@
 
 | Путь | Статус |
 | --- | --- |
-| Poller мода | KeyChord-контракт есть; физический Windows/Unity capture и порядок обновлений не подключены |
-| Global keymap/Rewired | Модель claims по chord/frame есть; game patches не найдены и не поставлены |
-| UI focus/Submit | Ownership scope и suppression API проверены; реальные guards не подключены |
+| Poller мода | Tracker снимков проверен в 11 сценариях; 0.1.2 наблюдает перед PerformGUI. Порядок относительно всех игровых путей и подавление не проверены |
+| Global keymap/Rewired | Модель claims по chord/frame есть; найден DeliverReInputEvent, добавлен необязательный наблюдатель. Подавление и live maps ещё не подключены |
+| UI focus/Submit | Ownership scope и suppression API проверены переносимо; добавлены наблюдатели Focus/ARButton. Реальные guards и отдельный EventSystem путь не проверены |
 | Exclusive modal | Runtime policy проверена; полная физическая exclusivity ожидает host |
 
 Raw capture, native text entry и неперехватываемые скринридером сочетания входят

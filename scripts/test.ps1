@@ -43,7 +43,7 @@ try {
     [IO.Directory]::CreateDirectory($logs) | Out-Null
     $dotnet = Get-Command dotnet -CommandType Application -ErrorAction Stop | Select-Object -First 1
     Invoke-LoggedTool $dotnet.Source @('--list-sdks') (Join-Path $logs 'sdk.log')
-    if (-not (Select-String -LiteralPath (Join-Path $logs 'sdk.log') -Pattern '^8\.' -Quiet)) { throw 'Для тестов нужен установленный .NET 8 SDK.' }
+    if (-not (Select-String -LiteralPath (Join-Path $logs 'sdk.log') -Pattern '^(?:[89]|[1-9][0-9]+)\.' -Quiet)) { throw 'Для тестов нужен установленный .NET SDK версии 8 или новее.' }
     $python = Get-Command py -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
     $pythonPrefix = @('-3')
     if ($null -eq $python) {

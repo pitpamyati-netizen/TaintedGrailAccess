@@ -74,10 +74,10 @@ class InspectGameTests(unittest.TestCase):
 
     def test_windows_wsl_paths_are_translated_without_search(self):
         path = inspector.normalize_game_path(r"D:\Games\Tainted Grail", windows_host=False)
-        self.assertEqual(str(path), "/mnt/d/Games/Tainted Grail")
+        self.assertEqual(path.as_posix(), "/mnt/d/Games/Tainted Grail")
         path = inspector.normalize_game_path("/mnt/d/Games/Tainted Grail", windows_host=True)
         self.assertEqual(str(path), "D:\\Games\\Tainted Grail")
-        self.assertEqual(str(inspector.normalize_game_path("/games/test", windows_host=False)), "/games/test")
+        self.assertEqual(inspector.normalize_game_path("/games/test", windows_host=False).as_posix(), "/games/test")
 
     def test_pe_architecture_and_cli_metadata_are_positive_evidence(self):
         for architecture in ("x86", "x64"):

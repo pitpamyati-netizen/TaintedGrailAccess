@@ -43,6 +43,20 @@ namespace TaintedGrailAccess.Runtime.Tests
             ("throwing_hover_sound_does_not_duplicate_spoken_focus", HoverFailureAnnouncesOnce),
             ("consumed_submit_stays_gated_after_unseated_or_raw_transition", ToolkitSubmitTransitionNoLeak),
             ("initial_focus_uses_model_selection_and_prioritizes_valid_suggestions", InitialFocusSelectionPriority),
+            ("passive_text_reads_once_then_live_changes_without_input_claims", PassiveTextLive),
+            ("passive_text_hides_unavailable_and_blank_sources", PassiveTextHidden),
+            ("passive_text_announcement_rechecks_source_without_retaining_views", PassiveTextFresh),
+            ("keyboard_press_hold_release", KeyboardSnapshotTests.PressHoldRelease),
+            ("keyboard_startup_held_key_requires_release", KeyboardSnapshotTests.StartupHeldKey),
+            ("keyboard_navigation_repeat_has_delay_and_no_burst", KeyboardSnapshotTests.NavigationRepeat),
+            ("keyboard_modifier_change_is_not_a_new_press", KeyboardSnapshotTests.ModifierIsNotNewPress),
+            ("keyboard_window_return_requires_release", KeyboardSnapshotTests.WindowReturnRequiresRelease),
+            ("keyboard_raw_and_text_capture_do_not_replay_enter", KeyboardSnapshotTests.RawAndTextCapture),
+            ("keyboard_multiple_gui_passes_do_not_repeat_action", KeyboardSnapshotTests.MultipleGuiPasses),
+            ("keyboard_return_and_keypad_enter_have_distinct_lifetimes", KeyboardSnapshotTests.PhysicalIdentity),
+            ("keyboard_invalid_snapshot_does_not_fabricate_release", KeyboardSnapshotTests.InvalidSnapshotDoesNotRelease),
+            ("keyboard_reset_requires_a_new_neutral_snapshot", KeyboardSnapshotTests.ResetRequiresNeutral),
+            ("keyboard_snapshots_drive_one_action_and_retain_owned_repeats", SnapshotActionOnce),
         };
 
         private static int Main(string[] args)
@@ -498,6 +512,31 @@ namespace TaintedGrailAccess.Runtime.Tests
             }
         }
 
+        private static void SnapshotActionOnce()
+        {
+            using (var rig = new Rig())
+            {
+                int actions = 0;
+                rig.Add("menu", b => b.Add(Id("action"), Label("Action", () => actions++)));
+                var tracker = new KeyboardSnapshotTracker();
+                rig.Step(tracker.Sample(0, 0, true, false, Array.Empty<HeldKey>()).ToArray());
+                rig.Step(tracker.Sample(1, 0.1, true, false,
+                    new[] { new HeldKey(13, Key(UiKey.Enter)) }).ToArray());
+                for (int i = 2; i < 5; i++)
+                {
+                    rig.Step(tracker.Sample(i, i * 0.1, true, false,
+                        new[] { new HeldKey(13, Key(UiKey.Enter, Modifiers.Shift)) }).ToArray());
+                    Check(rig.Input.ShouldSuppressGameChord(Key(UiKey.Enter, Modifiers.Shift)), "Owned held chord must remain claimed without reactivating.");
+                }
+                Equal(1, actions, "One physical press must invoke one action, including modifier changes while held.");
+                rig.Step(tracker.Sample(5, 0.5, true, false, Array.Empty<HeldKey>()).ToArray());
+                Check(!rig.Input.ShouldSuppressGameChord(Key(UiKey.Enter)), "Released key is not claimed.");
+                rig.Step(tracker.Sample(6, 0.6, true, false,
+                    new[] { new HeldKey(13, Key(UiKey.Enter)) }).ToArray());
+                Equal(2, actions, "A separate physical press invokes a separate action.");
+            }
+        }
+
         private static void HeldEnterNoRepeat()
         {
             using (var rig = new Rig())
@@ -643,6 +682,63 @@ namespace TaintedGrailAccess.Runtime.Tests
                 Check(rig.Screens.Current.State.NextSuggestedMove == null, "An absent suggestion is consumed instead of being retried indefinitely.");
                 rig.Step(Key(UiKey.Tab)); Equal("chosen", Current(rig), "A later deliberate Tab can still apply the initial-stop policy.");
             }
+        }
+
+        private static void PassiveTextLive()
+        {
+            using (var rig = new Rig())
+            {
+                var identity = new object();
+                string value = "Нажмите любую кнопку";
+                rig.Screens.Register(new PassiveTextScreen("prompt", "Стартовый экран",
+                    () => new VisibleText(identity, value)));
+                rig.Step();
+                Equal(2, rig.Speech.Lines.Count, "Title and visible prompt are announced once.");
+                Equal(value, rig.Speech.Lines[1].Text, "Game text passes through unchanged.");
+                Check(rig.Speech.Lines.All(line => !line.Interrupt), "Passive text queues.");
+                rig.Step(); rig.Step();
+                Equal(2, rig.Speech.Lines.Count, "Repeated builds are silent.");
+                Check(!rig.Input.ShouldSuppressGameChord(Key(UiKey.Enter)), "The empty stream leaves Enter to the game.");
+                Check(!rig.Input.ShouldSuppressGameChord(Key(UiKey.Space)), "The empty stream leaves Space to the game.");
+                value = "Нажмите кнопку для продолжения";
+                rig.Step();
+                Equal(3, rig.Speech.Lines.Count, "Changed visible text is read once.");
+                Equal(value, rig.Speech.Lines[2].Text, "Live text reads current state.");
+                Check(rig.Navigator.Current.Vtable.OnActivate == null, "A passive screen has no original action to invoke.");
+            }
+        }
+
+        private static void PassiveTextHidden()
+        {
+            using (var rig = new Rig())
+            {
+                VisibleText source = null;
+                rig.Screens.Register(new PassiveTextScreen("prompt", "Стартовый экран", () => source));
+                rig.Step(); Equal(0, rig.Speech.Lines.Count, "An absent prompt is silent.");
+                source = new VisibleText(new object(), "  ");
+                rig.Step(); Equal(0, rig.Speech.Lines.Count, "Blank text is not an accessible prompt.");
+                source = new VisibleText(new object(), "Видимая подсказка");
+                rig.Step(); Equal(2, rig.Speech.Lines.Count, "A newly visible prompt is read.");
+                source = null; rig.Step();
+                Check(rig.Navigator.Current == null, "Hidden text is removed instead of served from a cache.");
+                Equal(2, rig.Speech.Lines.Count, "Disappearance does not announce a false empty list.");
+            }
+        }
+
+        private static void PassiveTextFresh()
+        {
+            VisibleText source = new VisibleText(new object(), "Старый текст");
+            var screen = new PassiveTextScreen("prompt", "Стартовый экран", () => source);
+            var builder = new GraphBuilder(new GraphState());
+            screen.Build(builder);
+            var node = builder.Build().Nodes[Id("prompt.text")];
+            source = new VisibleText(new object(), "Новый текст");
+            Equal("Новый текст", node.Vtable.Announcements[0].Text(), "Even an existing node rechecks the provider.");
+            source = null;
+            Check(node.Vtable.Announcements[0].Text() == null, "An unavailable provider cannot read an old view.");
+            builder = new GraphBuilder(new GraphState());
+            screen.Build(builder);
+            Check(builder.Build() == null, "Build independently checks current availability.");
         }
 
         private sealed class Rig : IDisposable
