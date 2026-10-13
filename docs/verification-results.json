@@ -134,6 +134,7 @@
     "game_action_scope": "Explicit EnableTitleInput, exact fingerprints, live M1/M2 and M3 combat UI with original handlers; unbound example remains disabled",
     "pending": [
       "m3-multiple-combats-with-nvda",
+      "m3-multiple-card-selection",
       "m3-multistep-selection-and-death-of-target",
       "m3-class-variants-and-conversion",
       "m3-defeat-and-remaining-reward-variants",
@@ -162,7 +163,13 @@
     "m3_first_combat_accepted": true,
     "m3_escape_menu_accepted": true,
     "m3_target_cancel_hold_and_replay_accepted": true,
-    "m3_post_combat_resource_names_and_available_reward_path_accepted": true
+    "m3_post_combat_resource_names_and_available_reward_path_accepted": true,
+    "m3_multicard_or_retention_probe": {
+      "version": "0.3.3",
+      "result": "not-encountered",
+      "user_report": "Такое окно пока не встречалось",
+      "accepted": false
+    }
   },
   "results": [
     {
