@@ -177,6 +177,10 @@ namespace TaintedGrailAccess.Runtime
             if (chord.Key == UiKey.Escape && !chord.Control && !chord.Shift)
             {
                 _handlingClaimed = true;
+                // A native handler may have opened this screen on the preceding
+                // frame of the same physical press. Acquire the hold without
+                // invoking Back again or turning search cancellation into Back.
+                if (chord.IsRepeat) return true;
                 if (_query.Length > 0) { ClearSearch(); Say(_text.Get("search.cleared"), true); return true; }
                 return _session.Screen.OnBack();
             }

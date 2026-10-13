@@ -15,7 +15,7 @@
 | --- | --- | --- |
 | A1: параллельное дерево | GraphBuilder/KeyGraph; TitleUiBindings | Меню использует независимое дерево; native selection только для текстового редактора |
 | A2: immediate mode | Rerender, новый builder; TitleUiBindings/LiveViewSelection | World читается в callback и освобождается; view/delegates не сохраняются |
-| A3: identity, не render reference | ControlId; reference/structural/backward survivor tests; CardInHand reference + Model.ID | Перестановка/удаление одинаковых карт проверены переносимо; первый бой пройден с NVDA; исправление возврата в руку проверено переносимо |
+| A3: identity, не render reference | ControlId; reference/structural/backward survivor tests; CardInHand reference + Model.ID | Перестановка/удаление одинаковых карт проверены переносимо; первый бой пройден с NVDA; возврат в руку подтверждён пользователем |
 | A4: announce once | Navigator.AnnounceLanding, differ/direct memory; speech/sound-failure tests | Игровые hooks не должны добавлять сторонние focus Speak |
 | A5: оригинальные handlers | ARButton.Handle, MoveSlider, native text/loading/story; ApplyClick, MarkTarget, EndTurn и reward buttons | M2 принят; M3 подключён и собран, первый бой пройден с NVDA; расширенная приёмка M3 открыта |
 | A6: видимость как у зрячего | Живые Model.Views, active/Canvas/CanvasGroup/TMP, top modal, Interactable | Меню, загрузка и начальные диалоги GOG 1.61; скрытые игровые данные не читаются |
@@ -76,7 +76,7 @@
 
 ## Четыре пути ввода: раздел 8
 
-| Путь | Статус 0.3.1 |
+| Путь | Статус 0.3.2 |
 | --- | --- |
 | Poller мода | Early Update и prefixes TitleScreen, BaseScene, GameUI, EventSystem, loading; once/frame, held/release/blur; приоритет живой загрузки |
 | Global keymap/Rewired | Живые enabled keyboard maps; suppress только присвоенных источников. UINaviAction использует фактические Horizontal/Vertical |
@@ -87,7 +87,7 @@
 в игре с NVDA; native text capture и набор/удаление также подтверждены.
 Речевой просмотр и редактирование текста приняты с NVDA; сценарии —
 M1_VERIFICATION.md и M2_VERIFICATION.md. Вход в первый бой принят отдельно.
-Десять переносимых проверок M3 и BindingChecks описаны в M3_VERIFICATION.md;
+Четырнадцать переносимых проверок M3 и BindingChecks описаны в M3_VERIFICATION.md;
 они не заменяют несколько боёв с NVDA и проверку всех классовых вариантов.
 Raw/text отключают навигацию и поиск. Unknown chords вне собственной modal
 проходят игре; KeyUp не мешает штатной очистке held state. Exit/disable/failure

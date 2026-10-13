@@ -4,12 +4,12 @@
   "success": true,
   "platform": "Windows x64",
   "sdk": "10.0.301",
-  "method": "scripts/test.ps1, scripts/build.ps1, scripts/deploy.ps1, optional BindingChecks and user-led NVDA scenario",
+  "method": "scripts/test.ps1 historical full checks; dotnet run Runtime.Tests focused 0.3.2; scripts/build.ps1, scripts/deploy.ps1, BindingChecks and user-led NVDA scenarios",
   "production_reference_check": true,
   "production_target": "netstandard2.0",
   "test_runtime": "8.0.20",
   "game_tested": true,
-  "game_test_scope": "M1/M2 accepted; user completed first fight with NVDA on initial 0.3.0. New info shortcuts and hand focus in installed 0.3.1 are portable-tested and compiled, not yet live-replayed; full M3 gate pending",
+  "game_test_scope": "First combat completed on initial 0.3.0; user confirmed selected info readouts and hand/empty-hand focus on 0.3.1. Live log confirmed same-hold Escape closes native menu. Installed 0.3.2 fixes Escape; live replay pending, full M3 gate open",
   "native_speech_tested": true,
   "native_speech_scope": "NVDA heard by blind user; other backends and full gameplay not accepted",
   "historical_game_validation": {
@@ -29,7 +29,7 @@
     "unity_version": "2020.3.23f1",
     "backend": "Mono",
     "loader": "BepInEx 5.4.23.5",
-    "plugin": "0.3.1",
+    "plugin": "0.3.2",
     "architecture": "x64",
     "build_id": "59087960036481007",
     "application_version": "1.61",
@@ -60,7 +60,8 @@
       "initial-m3-card-applyclick-marktarget-and-blocking-effect",
       "initial-m3-original-endturn-and-next-round",
       "initial-m3-original-pile-inspection-and-close",
-      "initial-m3-result-screen-and-return-to-tutorial"
+      "initial-m3-result-screen-and-return-to-tutorial",
+      "0.3.1-native-menu-opened-and-immediately-closed-on-held-escape"
     ],
     "portable_tested": true,
     "full_path_accepted": true,
@@ -102,7 +103,8 @@
       "original-callerless-targeting-quickcast-within-own-scope",
       "visible-reroll-price-and-wealth",
       "combat-eight-passive-info-shortcuts",
-      "combat-within-hand-focus-after-first-last-card-removal-and-empty-hand"
+      "combat-within-hand-focus-after-first-last-card-removal-and-empty-hand",
+      "0.3.2-back-and-search-cancellation-once-per-physical-escape-press"
     ],
     "compiled_with_game": true,
     "blind_user_accepted": [
@@ -116,7 +118,9 @@
       "settings-audio-slider",
       "native-text-typing-deletion-selection-read-finish",
       "independent-new-hero-tutorial-dialogue-class-to-first-combat-path",
-      "initial-m3-first-combat-completed-with-nvda-with-two-reported-ux-issues"
+      "initial-m3-first-combat-completed-with-nvda-with-two-reported-ux-issues",
+      "0.3.1-health-energy-class-resource-detailed-brief-intents-on-selected-card",
+      "0.3.1-hand-focus-after-first-card-play-and-empty-hand"
     ],
     "game_actions_enabled": true,
     "m1_accepted": true,
@@ -129,8 +133,9 @@
       "m3-repeat-cancel-alt-tab",
       "retained-card-native-endturn-live-reproduction",
       "final-quickcast-on-off-single-multiple-target-and-repeat-replay",
-      "0.3.1-passive-info-live-nvda-hold-layout-and-modifier-check",
-      "0.3.1-hand-focus-after-play-empty-hand-and-cancel-live-replay"
+      "info-readouts-hold-layout-reserved-modifier-live-check",
+      "0.3.2-game-menu-open-hold-close-reopen-with-nvda",
+      "0.3.2-search-clear-target-cancel-hold-live-check"
     ],
     "limitations": [
       "saved-consent-not-reset-and-TOS-not-repeated-in-game",
@@ -140,7 +145,7 @@
       "class-hint-image-is-not-transcribed",
       "retained-card-native-endturn-static-early-return-risk",
       "exploration-full-run-M4-to-M6-not-implemented-or-accepted",
-      "initial-first-combat-user-acceptance-does-not-cover-0.3.1-corrections-or-full-M3"
+      "0.3.1-info-and-hand-focus-acceptance-does-not-cover-0.3.2-escape-or-full-M3"
     ],
     "full_path_scope": "M2 first path from title/new game through tutorial to first combat entry only",
     "full_gameplay_accepted": false,
@@ -159,7 +164,7 @@
     {
       "failed": 0,
       "project": "Runtime",
-      "passed": 77,
+      "passed": 81,
       "phase": "run"
     },
     {
@@ -206,13 +211,20 @@
       "backup_verified": true,
       "package_files_verified": 6,
       "live_replayed": false
+    },
+    {
+      "project": "Deployment 0.3.2",
+      "phase": "installed-hash-verified",
+      "backup_verified": true,
+      "package_files_verified": 6,
+      "live_replayed": false
     }
   ],
   "m3_build_evidence": {
     "initial_installed_host_sha256": "53e85330c11ebf5919cc2c0ec7f32abeeac847803ccff8312c9d9f63e2f53f40",
-    "version": "0.3.1",
-    "scope": "Initial 0.3.0 first fight completed by user with NVDA. Installed 0.3.1 info/focus/guard/quickcast candidate is portable-tested and metadata-checked; live replay pending",
+    "version": "0.3.2",
+    "scope": "Selected info readouts and hand focus accepted on 0.3.1. Installed 0.3.2 Escape fix is portable-tested (81 Runtime) and compiled; live replay pending",
     "final_candidate_installed": true,
-    "final_candidate_host_sha256": "20a02aa2617c962c794e9a193dfdd080fb8dbac3a6aeffd3037dcb726cfde8f0"
+    "final_candidate_host_sha256": "4638b3474a6ac62b69c23895c7169efaa6f03ee6c1e6f53b98ab700a4d246862"
   }
 }
