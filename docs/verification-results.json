@@ -9,7 +9,7 @@
   "production_target": "netstandard2.0",
   "test_runtime": "8.0.20",
   "game_tested": true,
-  "game_test_scope": "First combat completed on initial 0.3.0; user confirmed selected info readouts and hand/empty-hand focus on 0.3.1. On installed 0.3.2 the user confirmed game-menu opening, held Escape, arrow reading, closing with a separate Escape press and reopening with NVDA; full M3 gate open",
+  "game_test_scope": "First combat completed on initial 0.3.0; user confirmed selected info readouts and hand/empty-hand focus on 0.3.1. On installed 0.3.2 the user confirmed game-menu opening, held Escape, arrow reading, separate closing and reopening with NVDA; target-selection cancellation on held Escape without opening the menu, return to hand and subsequent Enter-target-Enter card play also accepted. Full M3 gate open",
   "native_speech_tested": true,
   "native_speech_scope": "NVDA heard by blind user; other backends and full gameplay not accepted",
   "historical_game_validation": {
@@ -62,7 +62,8 @@
       "initial-m3-original-pile-inspection-and-close",
       "initial-m3-result-screen-and-return-to-tutorial",
       "0.3.1-native-menu-opened-and-immediately-closed-on-held-escape",
-      "0.3.2-game-menu-open-hold-arrow-reading-close-reopen-with-nvda"
+      "0.3.2-game-menu-open-hold-arrow-reading-close-reopen-with-nvda",
+      "0.3.2-multiple-enemies-target-cancel-escape-hold-hand-return-and-enter-target-enter-with-nvda"
     ],
     "portable_tested": true,
     "full_path_accepted": true,
@@ -122,7 +123,8 @@
       "initial-m3-first-combat-completed-with-nvda-with-two-reported-ux-issues",
       "0.3.1-health-energy-class-resource-detailed-brief-intents-on-selected-card",
       "0.3.1-hand-focus-after-first-card-play-and-empty-hand",
-      "0.3.2-game-menu-open-hold-arrow-reading-close-reopen-with-nvda"
+      "0.3.2-game-menu-open-hold-arrow-reading-close-reopen-with-nvda",
+      "0.3.2-multiple-enemies-target-cancel-escape-hold-hand-return-and-enter-target-enter-with-nvda"
     ],
     "game_actions_enabled": true,
     "m1_accepted": true,
@@ -136,7 +138,7 @@
       "retained-card-native-endturn-live-reproduction",
       "final-quickcast-on-off-single-multiple-target-and-repeat-replay",
       "info-readouts-hold-layout-reserved-modifier-live-check",
-      "0.3.2-search-clear-target-cancel-hold-live-check"
+      "0.3.2-search-clear-hold-live-check"
     ],
     "limitations": [
       "saved-consent-not-reset-and-TOS-not-repeated-in-game",
@@ -146,7 +148,7 @@
       "class-hint-image-is-not-transcribed",
       "retained-card-native-endturn-static-early-return-risk",
       "exploration-full-run-M4-to-M6-not-implemented-or-accepted",
-      "0.3.1-info-hand-focus-and-0.3.2-game-menu-acceptance-do-not-cover-search-target-cancel-hold-or-full-M3"
+      "0.3.1-info-hand-focus-and-0.3.2-game-menu-target-cancel-acceptance-do-not-cover-search-hold-enter-confirm-hold-target-disappearance-or-full-M3"
     ],
     "full_path_scope": "M2 first path from title/new game through tutorial to first combat entry only",
     "full_gameplay_accepted": false,
@@ -154,7 +156,8 @@
     "m3_accepted": false,
     "m3_class_variants_accepted": false,
     "m3_first_combat_accepted": true,
-    "m3_escape_menu_accepted": true
+    "m3_escape_menu_accepted": true,
+    "m3_target_cancel_hold_and_replay_accepted": true
   },
   "results": [
     {
@@ -221,13 +224,13 @@
       "backup_verified": true,
       "package_files_verified": 6,
       "live_replayed": true,
-      "live_scope": "User confirmed native game-menu opening, held Escape, arrow reading, closing with a separate Escape press and reopening with NVDA; search and target cancellation on hold remain pending"
+      "live_scope": "User confirmed native game-menu opening, held Escape, arrow reading, separate closing and reopening with NVDA; target-selection cancellation on held Escape without opening the menu, return to hand and subsequent Enter-target-Enter card play also accepted. Class and card unspecified; search on hold, Enter confirmation on hold and target disappearance remain pending"
     }
   ],
   "m3_build_evidence": {
     "initial_installed_host_sha256": "53e85330c11ebf5919cc2c0ec7f32abeeac847803ccff8312c9d9f63e2f53f40",
     "version": "0.3.2",
-    "scope": "Selected info readouts and hand focus accepted on 0.3.1. Installed 0.3.2 Escape fix is portable-tested (81 Runtime) and compiled; native game-menu opening, held Escape, arrow reading, separate Escape closing and reopening accepted with NVDA. Search, target cancellation on hold and full M3 remain pending",
+    "scope": "Selected info readouts and hand focus accepted on 0.3.1. Installed 0.3.2 Escape fix is portable-tested (81 Runtime) and compiled; native menu and target-selection cancellation on held Escape, hand return and subsequent Enter-target-Enter card play accepted with NVDA. Search on hold, Enter confirmation on hold, target disappearance and full M3 remain pending",
     "final_candidate_installed": true,
     "final_candidate_host_sha256": "4638b3474a6ac62b69c23895c7169efaa6f03ee6c1e6f53b98ab700a4d246862"
   }
