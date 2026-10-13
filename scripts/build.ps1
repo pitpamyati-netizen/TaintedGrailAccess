@@ -118,7 +118,7 @@ function Get-DiagnosticReferences([string]$GamePath, [string]$ManifestPath, [boo
     if ($exe.Count -ne 1 -or $exe[0].binary.architecture -ne 'x64') { throw 'Нужен подтверждённый PE x64 исполняемый файл игры.' }
     $managed = Join-Path $game ($inventory.layout.selected_data_directory + '\Managed')
     Assert-NoReparsePath $managed
-    foreach ($name in @('mscorlib.dll', 'UnityEngine.CoreModule.dll', 'UnityEngine.UIModule.dll', 'UnityEngine.InputLegacyModule.dll', 'UnityEngine.IMGUIModule.dll')) {
+    foreach ($name in @('mscorlib.dll', 'UnityEngine.CoreModule.dll', 'UnityEngine.UIModule.dll', 'UnityEngine.InputLegacyModule.dll', 'UnityEngine.IMGUIModule.dll', 'UnityEngine.UI.dll', 'Unity.TextMeshPro.dll', 'Rewired_Core.dll')) {
         $path = Join-Path $managed $name
         Assert-NoReparsePath $path
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Нет локальной ссылки сборки: $name" }
@@ -140,6 +140,9 @@ function Get-DiagnosticReferences([string]$GamePath, [string]$ManifestPath, [boo
             unity_ui = (Get-FileHash -LiteralPath (Join-Path $managed 'UnityEngine.UIModule.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
             unity_input = (Get-FileHash -LiteralPath (Join-Path $managed 'UnityEngine.InputLegacyModule.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
             unity_imgui = (Get-FileHash -LiteralPath (Join-Path $managed 'UnityEngine.IMGUIModule.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
+            unity_toolkit = (Get-FileHash -LiteralPath (Join-Path $managed 'UnityEngine.UI.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
+            unity_tmp = (Get-FileHash -LiteralPath (Join-Path $managed 'Unity.TextMeshPro.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
+            rewired = (Get-FileHash -LiteralPath (Join-Path $managed 'Rewired_Core.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
         }
     }
 }

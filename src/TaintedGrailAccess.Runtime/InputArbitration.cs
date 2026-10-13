@@ -30,6 +30,8 @@ namespace TaintedGrailAccess.Runtime
             // BeginFrame clears them on the following frame.
         }
         public void Claim(KeyChord chord) { if (!RawCapture) _claims.Add(chord); }
+        /// <summary>Reports an explicit consumed chord, independently of modal policy.</summary>
+        public bool IsClaimed(KeyChord chord) { return _claims.Contains(chord); }
         public bool ShouldSuppressGameChord(KeyChord chord)
         { return !OwnAction && (_claims.Contains(chord) || (!RawCapture && Exclusive)); }
         public bool ShouldSuppressToolkitSubmit(bool accessibilityHasFocus)

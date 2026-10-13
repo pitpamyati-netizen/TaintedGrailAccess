@@ -57,6 +57,14 @@ namespace TaintedGrailAccess.Runtime.Tests
             ("keyboard_invalid_snapshot_does_not_fabricate_release", KeyboardSnapshotTests.InvalidSnapshotDoesNotRelease),
             ("keyboard_reset_requires_a_new_neutral_snapshot", KeyboardSnapshotTests.ResetRequiresNeutral),
             ("keyboard_snapshots_drive_one_action_and_retain_owned_repeats", SnapshotActionOnce),
+            ("physical_navigation_gap_and_release", PhysicalInputTests.NavigationGap),
+            ("physical_action_once_and_toolkit_guard", PhysicalInputTests.ActionAndToolkit),
+            ("physical_raw_transition_owns_opener_only", PhysicalInputTests.RawTransition),
+            ("physical_unknown_and_multiple_mapped_contributors", PhysicalInputTests.UnknownAndMappedContributors),
+            ("physical_blur_return_and_disable", PhysicalInputTests.BlurAndDisable),
+            ("physical_modal_text_and_unfocused", PhysicalInputTests.ModalAndUnfocused),
+            ("physical_exception_after_original_action", PhysicalInputTests.ExceptionAfterAction),
+            ("physical_menu_is_not_model_main_view", PhysicalInputTests.NonMainView),
         };
 
         private static int Main(string[] args)

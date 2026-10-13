@@ -12,16 +12,18 @@ using UnityEngine;
 namespace TaintedGrailAccess.BepInExHost
 {
     /// <summary>
-    /// Diagnostic bootstrap, passive start reader and opt-in input observation.
-    /// No suppression or game actions. Speech success is not complete game accessibility.
+    /// Diagnostic bootstrap, passive start reader and opt-in fingerprinted title input.
+    /// Speech success is not complete game accessibility.
     /// </summary>
-    [BepInPlugin("org.taintedgrailaccess.diagnostics", "Tainted Grail Access Diagnostics", "0.1.2")]
+    [DefaultExecutionOrder(-32000)]
+    [BepInPlugin("org.taintedgrailaccess.diagnostics", "Tainted Grail Access Diagnostics", "0.1.3")]
     public sealed class DiagnosticPlugin : BaseUnityPlugin
     {
         private WindowsSpeechOutput _speech;
         private DiagnosticLog _log;
         private StartPromptReader _startPrompt;
         private GameInputAudit _inputAudit;
+        private TitleInputHost _titleInput;
         private bool _startupPending;
         private string _startupText;
         private bool _booted;
@@ -47,7 +49,7 @@ namespace TaintedGrailAccess.BepInExHost
                     TolkDllPath = Config.Bind("Speech", "TolkDllPath", "", "Optional absolute local x64 Tolk.dll path. JAWS needs its Tolk backend and live testing.").Value,
                     AllowSapiFallback = Config.Bind("Speech", "AllowSapiFallback", true, "Use an installed Windows SAPI voice when the selected screen reader bridge is unavailable.").Value
                 };
-                _log.Write("host.status", "DIAGNOSTIC_BOOTSTRAP; no input suppression or game actions are installed.");
+                _log.Write("host.status", "BOOTSTRAP; input mode will be selected after configuration and fingerprint checks.");
                 _log.Write("host.game", "Product=" + Application.productName + "; Version=" + Application.version +
                     "; Unity=" + Application.unityVersion + "; ProcessBits=" + (IntPtr.Size * 8).ToString(CultureInfo.InvariantCulture));
                 _log.Write("host.loader", typeof(BaseUnityPlugin).Assembly.GetName().FullName);
@@ -100,6 +102,20 @@ namespace TaintedGrailAccess.BepInExHost
                         _log.Write("binding.input-audit.disabled", exception.GetType().Name + ": " + exception.Message);
                     }
                 }
+                var titleInput = Config.Bind("Accessibility", "EnableTitleInput", false,
+                    "Enable fingerprinted title/settings controls for M1 verification; unsupported screens keep ordinary input.");
+                if (titleInput.Value)
+                {
+                    try
+                    {
+                        _titleInput = new TitleInputHost(_speech, text, _log);
+                        _startupText = text.Get("startup.titleInput");
+                    }
+                    catch (Exception exception)
+                    { _log.Write("binding.title-input.disabled", exception.GetType().Name + ": " + exception.Message); }
+                }
+                _log.Write("host.status", _titleInput != null ? "TITLE_INPUT_ENABLED; original UI handlers, scoped keyboard ownership." :
+                    "PASSIVE_DIAGNOSTICS; no input suppression or game actions installed.");
             }
             catch (Exception exception)
             {
@@ -110,6 +126,7 @@ namespace TaintedGrailAccess.BepInExHost
 
         private void Update()
         {
+            _titleInput?.Poll("plugin.Update");
             // Delay the diagnostic announcement until the game actually has focus.
             // This is a tick proof of life, not a game-state integration.
             if (!_startupPending || !Application.isFocused || _speech == null) return;
@@ -120,12 +137,16 @@ namespace TaintedGrailAccess.BepInExHost
         private void OnApplicationFocus(bool focused)
         {
             _inputAudit?.OnWindowFocusChanged(focused);
+            _titleInput?.OnWindowFocusChanged(focused);
             if (!focused) _speech?.Stop();
         }
 
         private void OnDestroy()
         {
             _startupPending = false;
+            try { _titleInput?.Dispose(); }
+            catch (Exception exception) { Logger.LogWarning("Title input cleanup failed: " + exception.Message); }
+            _titleInput = null;
             try { _inputAudit?.Dispose(); }
             catch (Exception exception) { Logger.LogWarning("Input observer cleanup failed: " + exception.Message); }
             _inputAudit = null;

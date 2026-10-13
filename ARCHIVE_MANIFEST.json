@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "project": "Tainted Grail Access",
-  "prepared_on": "2026-10-12",
-  "status": "source_project_passive_start_and_opt_in_input_observation",
+  "prepared_on": "2026-10-13",
+  "status": "source_project_m1_title_input_verified",
   "verification_report": "docs/verification-results.json",
   "manifest_excludes_itself": true,
   "content_format": "Git index source bytes, text normalized to LF by .gitattributes",
@@ -29,8 +29,8 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 3206,
-      "sha256": "3b9bc0f89cf2ab88b2cb8a777f867df847a095fb3f6eb63540723732f92d3df9"
+      "bytes": 4770,
+      "sha256": "06f645b63e37fb632eac22d156ab0b8a5310997160d50ddabbd1181999c35f24"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -49,13 +49,13 @@
     },
     {
       "path": "README.md",
-      "bytes": 7335,
-      "sha256": "3df6c71329950bd24121b4a17bb8fd5bd5a2a3f82d09c64835bf23e454de3f2a"
+      "bytes": 7527,
+      "sha256": "8e74959e7af1fa78760d4ca61ddc88dcc1a34d218303969a3f600e7f779d4019"
     },
     {
       "path": "ROADMAP.md",
-      "bytes": 8651,
-      "sha256": "d1e718a9f1db56b4829bf482f47696c341530777648f4d4ebea1d430cdb7f07e"
+      "bytes": 9661,
+      "sha256": "732fbbeada1edd2e92278b3c43929b72c639909e517a446f86580c46f77c357a"
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
@@ -74,8 +74,8 @@
     },
     {
       "path": "docs/BUILD_AND_INSTALL.md",
-      "bytes": 22875,
-      "sha256": "cfe1274167daed29b1700925ec30a4eb59f83a4df5ec6736980883c963beab69"
+      "bytes": 23475,
+      "sha256": "a425e137c2eddb30281c11f97d97c79d45dec39e37994674a13d5737d2320ae4"
     },
     {
       "path": "docs/DEVELOPMENT_GUIDE.md",
@@ -89,18 +89,18 @@
     },
     {
       "path": "docs/GAMEPLAY_COVERAGE.md",
-      "bytes": 54314,
-      "sha256": "1afb756d264a8ed4387a3ab227243cb14558b3e67b74a336f20e3f6c2aa7e788"
+      "bytes": 54264,
+      "sha256": "6c9db35f9522a988c3e84f1b2a47c35741f5ea8ac783ac71ebb99c89822e3fd1"
     },
     {
       "path": "docs/GAME_API.md",
-      "bytes": 14618,
-      "sha256": "a980abeda3d9b018baa5606b62e2815d03de4bc2599bbb80b8a76bee43bc6135"
+      "bytes": 23464,
+      "sha256": "749f359b9d25fbb6b777c3f260e11b907575c2318e5fe76d90209d05e224dc1c"
     },
     {
       "path": "docs/GAME_DISCOVERY.md",
-      "bytes": 11095,
-      "sha256": "1fccf4281d103c97fe5e90f4a9855412dfce09eac5e8ee5a20264a04777b6e69"
+      "bytes": 11157,
+      "sha256": "47942f06f89b601cf552c4338ccf3bb4e41a5858ea895f862a6e6256b03faf99"
     },
     {
       "path": "docs/GIT_AND_GITHUB.md",
@@ -114,13 +114,18 @@
     },
     {
       "path": "docs/KEYBOARD_AND_SPEECH.md",
-      "bytes": 9388,
-      "sha256": "5aa994e030969ec8145c61ca55e76cb19934fdd01afe9f4b95c29dda7de0097a"
+      "bytes": 9905,
+      "sha256": "9b881d3fccdf7e6d18d95d2dac0cb90e9d50160b8aac849325954fd8d1ac238d"
     },
     {
       "path": "docs/LOCALIZATION.md",
       "bytes": 6279,
       "sha256": "135052caaed1aa4dd9749163b4ab6796446441f8f14e1306d15848bfcb5f58ce"
+    },
+    {
+      "path": "docs/M1_VERIFICATION.md",
+      "bytes": 8083,
+      "sha256": "e590f41d87aa6361494c961f08818010e467268dff1c95045efd12b5409b8fee"
     },
     {
       "path": "docs/MENU_ACCESSIBILITY.md",
@@ -129,8 +134,8 @@
     },
     {
       "path": "docs/PROJECT_STATUS.md",
-      "bytes": 10275,
-      "sha256": "498aa5918fb37355168334910387df913f9ead1e448339e5af5447cb0ed33a2d"
+      "bytes": 5445,
+      "sha256": "fb3e9effacfb2a273e6db3dfad27a51985eca56d4c62bac7028554b58a977295"
     },
     {
       "path": "docs/RELEASE_GUIDE.md",
@@ -139,13 +144,13 @@
     },
     {
       "path": "docs/SPEC_CONFORMANCE.md",
-      "bytes": 12471,
-      "sha256": "bedeff6ba4d41c5516bff73a0f271c058ba0b706cf5554d2cb3d0136ef338e37"
+      "bytes": 12899,
+      "sha256": "88f2f784f88ea930ce3554e5d05a434e3cb260b8ed6d4d5952248db457f93cd5"
     },
     {
       "path": "docs/TEST_RESULTS.md",
-      "bytes": 15738,
-      "sha256": "3c4edc0c17927f7b2fd69d8daeccbe2e7076e2b4a534be444c29deb3f652af82"
+      "bytes": 19003,
+      "sha256": "8374e0a16a78611a74458098872ba0fd59d7c1ed22539946ec29f93946d25caa"
     },
     {
       "path": "docs/licenses/accessibility-mod-template-CC-BY-4.0.txt",
@@ -174,8 +179,8 @@
     },
     {
       "path": "docs/research/title-input-bindings.md",
-      "bytes": 14291,
-      "sha256": "e7203631a1f9cb6ba4d51506e36eb71ed5ca628e69a3b666260ba9ea5ba1ebd3"
+      "bytes": 14983,
+      "sha256": "e251fe4f03ddbaaf3eea0e2b90a4e261cf6512eaf32268a4c1b5a504e9c96b73"
     },
     {
       "path": "docs/spec/graph-a11y-spec.original.md",
@@ -184,18 +189,18 @@
     },
     {
       "path": "docs/verification-results.json",
-      "bytes": 2258,
-      "sha256": "8c403c714f7d6acb74ddce594902aa94c2f6d4a2ae8b8bafd9755d7ea62571b7"
+      "bytes": 4041,
+      "sha256": "50432361cc67ef08aa346e18979608cbc9bf62c481b51b66bda0149964e705eb"
     },
     {
       "path": "locales/en.properties",
-      "bytes": 1137,
-      "sha256": "c4bcdb716a802a14791180baeef8e407c30ef132b9e810233245915b11e8ad8f"
+      "bytes": 2169,
+      "sha256": "f777cb344f26aa7f873ce314dc19eddbee6c1ae81cba6b339adf2e6bcf49dd8b"
     },
     {
       "path": "locales/ru.properties",
-      "bytes": 1794,
-      "sha256": "0a77a2d0bb56ee0c1881693662476a39ec35b99c13561bc7e5839e6f5d12b879"
+      "bytes": 3491,
+      "sha256": "714fd5635a35b34f59ebd98df58fa4fdc0a872961f9bafbeb8ef0514658ad3d8"
     },
     {
       "path": "profiles/unbound.example.json",
@@ -204,13 +209,13 @@
     },
     {
       "path": "scripts/build.ps1",
-      "bytes": 15662,
-      "sha256": "6501c038bf07446e6437275707d1e93bd09708179beaa91b4c5b4250d3ca9e05"
+      "bytes": 16140,
+      "sha256": "3f1bfb628b0ef1ccb5aeb96e74c578cf850d8c427162f10e6bd1374fd3a811af"
     },
     {
       "path": "scripts/deploy.ps1",
-      "bytes": 25461,
-      "sha256": "d76930cdedc47744ecbe2d1d144c9b79c1c7c1f8b9bccc1d1494fbb0315b5a1e"
+      "bytes": 26026,
+      "sha256": "fb53db62ef6d9a41e36a664f39bf0cbdd1f873e95e050e649c5143c3e583e1c5"
     },
     {
       "path": "scripts/inspect_game.py",
@@ -229,8 +234,8 @@
     },
     {
       "path": "src/TaintedGrailAccess.BepInEx/DiagnosticPlugin.cs",
-      "bytes": 8837,
-      "sha256": "ca9739761fdbcc8035a820d98642c654c634ba774e7b633ccc96fc8a8010b5ba"
+      "bytes": 10109,
+      "sha256": "33f0780a0e456e21d92cd1b225538f3ed0eb73afc665dc4e3cf1ce4c07cef7d6"
     },
     {
       "path": "src/TaintedGrailAccess.BepInEx/GameInputAudit.cs",
@@ -239,8 +244,8 @@
     },
     {
       "path": "src/TaintedGrailAccess.BepInEx/InspectedGameBuild.cs",
-      "bytes": 1354,
-      "sha256": "15eb234701b066c9b19b065d339bab1749e5e64c7711788208e89d53ecce316f"
+      "bytes": 2365,
+      "sha256": "1122c94c92a45e36b008fbd227df534113dd7f3eabf7d24b9d02324c62fe9812"
     },
     {
       "path": "src/TaintedGrailAccess.BepInEx/SignatureInventory.cs",
@@ -254,8 +259,18 @@
     },
     {
       "path": "src/TaintedGrailAccess.BepInEx/TaintedGrailAccess.BepInEx.csproj",
-      "bytes": 3250,
-      "sha256": "e424fffdbd2f5cc073b7c939c2260e9aca82e1578288110ea7ec3877814e62e0"
+      "bytes": 3683,
+      "sha256": "7cb9efc7e385bcdb762df0c42b137e7c0973f3deb767925aa3489913b1fefc3e"
+    },
+    {
+      "path": "src/TaintedGrailAccess.BepInEx/TitleInputHost.cs",
+      "bytes": 18955,
+      "sha256": "c3d25074fd48450bc3602e0a249c426af92cc243973dc41300a54fe0e865e375"
+    },
+    {
+      "path": "src/TaintedGrailAccess.BepInEx/TitleUiBindings.cs",
+      "bytes": 25753,
+      "sha256": "79d56d41d1e95448f3b44c8b5d9d9cccb142dc1c0fe571e6284c011bcfea3006"
     },
     {
       "path": "src/TaintedGrailAccess.Graph/GraphAnnouncer.cs",
@@ -284,18 +299,23 @@
     },
     {
       "path": "src/TaintedGrailAccess.Runtime/AccessibilityRuntime.cs",
-      "bytes": 2148,
-      "sha256": "ab5ff733c7198f43c3c8f77e89f397897f0601a35dab0a66a5c7581d76e9436d"
+      "bytes": 2507,
+      "sha256": "946db615dd13209aadafa1fbf313d1be849d299f9b9cedc1e14c98a3b09d2541"
     },
     {
       "path": "src/TaintedGrailAccess.Runtime/InputArbitration.cs",
-      "bytes": 2650,
-      "sha256": "456f079d9a0c4828b3dc12a2ff59f7a333c4740219587c8956f9f388e6697a2d"
+      "bytes": 2830,
+      "sha256": "2e6b237174bac62baa1352f5e71150b8559d1c25589a6095c27047140a9e755b"
     },
     {
       "path": "src/TaintedGrailAccess.Runtime/KeyboardSnapshotTracker.cs",
       "bytes": 5394,
       "sha256": "0c64386f6c59d04d0a42ea7535d4025b76657a2b93a0fdfd6fbafab270471dea"
+    },
+    {
+      "path": "src/TaintedGrailAccess.Runtime/LiveViewSelection.cs",
+      "bytes": 671,
+      "sha256": "7af9e66b0674a622f0518668c6a2f4b5608db8ab38096b4c14e734bd79a2ae2a"
     },
     {
       "path": "src/TaintedGrailAccess.Runtime/Navigator.cs",
@@ -306,6 +326,11 @@
       "path": "src/TaintedGrailAccess.Runtime/PassiveTextScreen.cs",
       "bytes": 2239,
       "sha256": "db11ec252096727685db3cdef508e8b38667f8b4c204a155c7ddd6af3c4f7dbe"
+    },
+    {
+      "path": "src/TaintedGrailAccess.Runtime/PhysicalInputGate.cs",
+      "bytes": 3593,
+      "sha256": "f9099e836d1abf4a2dead82f9db34300105cf798ef9871d1d8a6e827dcb18b69"
     },
     {
       "path": "src/TaintedGrailAccess.Runtime/Ports.cs",
@@ -348,6 +373,16 @@
       "sha256": "6e432b64b74aa7c3cbb7ff60727e5fb8a6410c5629290361d1c45b6c72f049b8"
     },
     {
+      "path": "tests/TaintedGrailAccess.BindingChecks/Program.cs",
+      "bytes": 2231,
+      "sha256": "f141b27b9e1ec072f2ec6605ee61db66813a7c6d86a41fb18ea5f73aff1e965e"
+    },
+    {
+      "path": "tests/TaintedGrailAccess.BindingChecks/TaintedGrailAccess.BindingChecks.csproj",
+      "bytes": 378,
+      "sha256": "3e251ebd38b9be27610d959c2606053963ab6fd296751abe90ca8c974dd517d9"
+    },
+    {
       "path": "tests/TaintedGrailAccess.Graph.Tests/Program.cs",
       "bytes": 45545,
       "sha256": "5cb22e91ee77c93b684174be625a658fc4ed7066432256d4a73ff0f946778727"
@@ -363,9 +398,14 @@
       "sha256": "cea79221b4c92df4ee162e4184ca4697d7fdbc2c441d98b234f48cdd4cba7a80"
     },
     {
+      "path": "tests/TaintedGrailAccess.Runtime.Tests/PhysicalInputTests.cs",
+      "bytes": 8670,
+      "sha256": "b7c59bd2371dcf22037fd8dbb4078e2ebd3de237e03d27dddda964b7a565612c"
+    },
+    {
       "path": "tests/TaintedGrailAccess.Runtime.Tests/Program.cs",
-      "bytes": 52041,
-      "sha256": "89a67d569b15a8c9623bcea1c1dfbb9589bc35460c10d33377f1cb47ccd89c6c"
+      "bytes": 52788,
+      "sha256": "c522ccefce7033f5fe85280319675be3eb4f10af43a669f481590b9655ea635f"
     },
     {
       "path": "tests/TaintedGrailAccess.Runtime.Tests/TaintedGrailAccess.Runtime.Tests.csproj",

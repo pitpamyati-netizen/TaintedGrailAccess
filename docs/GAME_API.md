@@ -4,6 +4,51 @@
 [источник и условия](research/template-import.md).
 Метод исследования — [GAME_DISCOVERY.md](GAME_DISCOVERY.md).
 
+## M1: текущий статус 0.1.3, 13 октября 2026
+
+Активный host теперь подключён при явном EnableTitleInput; точные fingerprints
+приведены ниже. Исторические записи 0.1.1/0.1.2 сохраняют состояние на свои даты.
+Меню/переключатели/возврат, повтор и Alt+Tab, справка, rebind/cancel проверены
+в игре с NVDA. Согласие и неиспользованные меню handlers статически найдены,
+но не заявляются как завершённый пользовательский путь M2.
+
+`TitleScreenUI.ShowMainView/SpawnStartupPopup` вызывают World.SpawnView с
+isMainView=false: VTitleScreenRogueUI находится в живой Model.Views. Регрессия
+LiveViewSelection защищает скрытые/пересозданные и non-main views.
+Вложенный original handler входит в host.Poll в том же frame: return расположен
+перед finally, чтобы не очистить World внешнего callback и не потерять cursor.
+
+Rewired: GameUI.UpdateReInput → DeliverReInputEvent(InputAction, UIAction).
+UIAction.CreateAxis создаёт UINaviAction из Horizontal/Vertical независимо от
+текущего action loop; direction определяет действительный источник. Читаются
+enabled maps/AllMaps и ActionElementMap.actionId/keyCode/modifierKey1/2/3.
+Карты не меняются; независимый неприсвоенный contributor не подавляется.
+
+Unity UI: Button.OnSubmit(BaseEventData), Toggle.OnSubmit(BaseEventData),
+Selectable.OnMove(AxisEventData), EventSystem.Update(), StandaloneInputModule.Process()
+и SendUpdateEventToSelectedObject(). GameUI.KeyUp остаётся штатной очисткой.
+Исключение после действия не освобождает использованное нажатие.
+
+Текст: VButtonOption._option/button/displayName, ButtonOption исходный callback
+открывает UserBugReporting. VUserBugReporting.title/description — TMP_InputField.
+Исходные EventSystem.SetSelectedGameObject → TMP_InputField.OnSelect(BaseEventData)
+и OnPointerClick(PointerEventData) дают редактору ввод; это только native edit
+ownership. TMP_InputField.LateUpdate активирует отложенный editor, OnUpdateSelected
+читает Event.PopEvent, protected EditState KeyPressed(Event) выполняет правку.
+InputField имеет такой же исходный путь KeyPressed(Event). Scoped guard пропускает
+свежие клавиши, но не позволяет открывающему Enter завершить editor повторно.
+Native focused fields/raw capture останавливают graph navigation/search.
+Диагностика записывает только focused/selected/readOnly/длину, без текста/символов.
+UserBugReporting.Close() вызывается исходной closeButton; отправка не предоставлена.
+
+ShortcutsLayerStack.TopLayer.Model проверяет живого владельца modal. Неизвестное
+игровое окно вызывает stand-down. Только собственная справка Ctrl+F1 эксклюзивна.
+Уничтожение TitleScreen/выключение освобождает клавиши, cursor и screen state.
+Окончательный запуск подтвердил native focused/selected и набор/удаление по
+длине поля без записи символов. Пользователь подтвердил отсутствие чтения
+пунктов и закрытие Escape. Озвучивание букв пока отсутствует и остаётся M2.
+Результаты — [M1_VERIFICATION.md](M1_VERIFICATION.md).
+
 ## Текущая граница знаний
 
 Целевая игра: **Tainted Grail: Conquest**, App ID 1199030, Windows x64.
@@ -170,6 +215,59 @@ poll-and-diff экранов.
 Ненайденный контракт остаётся ограничением в ROADMAP/coverage.
 
 ## История
+
+Исправление по игровой проверке 13 октября: стартовая подсказка закрылась,
+но пользователь не слышал меню. `TitleScreenUI.SpawnStartupPopup()` и
+`ShowMainView()` вызывают `World.SpawnView(...VTitleScreenRogueUI...)` с
+`isMainView=false` по умолчанию. Следовательно, прежний вывод о меню в MainView
+был неверным. Меню находится по точному типу в живой `Model.Views`, как
+`World.View<T>(Model)` самой игры. Добавлена регрессия для overlay, скрытого
+и заново созданного меню. Проверка слышимости исправления ещё предстоит.
+
+### Новые статические доказательства M1, 13 октября 2026
+
+Повторно прочитаны локальные inventory и журнал загрузки. TG.Main совпадает
+с SHA-256/MVID выше. Выборочное чтение ILSpy 11.1 подтвердило:
+
+- `TitleScreen.Start/OnGUI/LateUpdate/OnDestroy`, `World` и `_initialized`:
+  контроллер сцены допускает слабую ссылку только для получения живого World;
+  view, списки и обработчики между кадрами не сохраняются.
+- `GameUI.PerformGUI()` сначала вызывает `UpdateReInput()`, затем
+  `HandleKeyDown(Event)`/`HandleKeyUp(Event)`. Собственный ранний опрос нужен также
+  перед Unity EventSystem, который выполняется независимо от OnGUI.
+- `Focus.BeforeDelivery(UIEvent)` принимает `UISubmitAction` и вызывает
+  `HandleSubmitButton()`: обычный Button получает onClick, Toggle меняется
+  самостоятельно. Поэтому одного перехвата ARButton недостаточно.
+- `UnityEngine.UI.Toggle.OnSubmit(BaseEventData)` вызывает штатный
+  `InternalToggle()`, который проверяет IsActive/IsInteractable и запускает
+  исходный listener VToggle. Мод не записывает isOn или ToggleOption.Enabled.
+- `StandaloneInputModule.Process()` вызывает update-selected, move и submit/cancel;
+  `Button/Toggle.OnSubmit`, `Selectable.OnMove` — отдельные пути Unity UI.
+- `VSettingsUI._tabs: SettingsTabButton[]`, `_spawnedSettings` в AllSettingsUI:
+  порядок задаёт игра. `TabButtonBase.button`, `selectedText`, `IsActive` и
+  `Select()` подтверждены; Select вызывает исходный button.onClick.
+- `VUserBugReporting.title/description: TMPro.TMP_InputField`: реальные поля.
+  Текст и символы пользователя не записываются в диагностику.
+- Rewired `ActionElementMap.actionId/keyCode/modifierKey1/2/3/controllerMap/enabled`:
+  фактические назначения и enabled читаются заново; карты не изменяются.
+
+Дополнительные сборки для этих привязок, SHA-256:
+
+- Rewired_Core: `cf3c91bed960e0b45e67dc67fb6df6eca7d05a37b803c788bbf2c151d1bde842`.
+- UnityEngine.UI: `69aea3e824546d94063dd22ee998125847d65171ab4a210b3f08ef392aabfc97`.
+- Unity.TextMeshPro: `b892fcec2b444d6c2623ba456319e71697e9387bd04bee993843f5e26c8f9db9`.
+
+MVID соответственно: `d3f4044c-7648-45c9-b50d-8d7e6d871796`,
+`d8562c56-a489-4d6f-bb2b-224105bd17d4`, `5ec98d0f-fd50-4ec7-ac26-58db85bcd6ab`.
+Все поля TitleUiBindings разрешены отдельной проверкой с настоящими сборками,
+без запуска Unity и без игровых действий. `GameUI.HandleKeyUp(Event)` только
+удаляет запись `_heldKeys`, поэтому остаётся игре, включая присвоенную модом
+клавишу. Иначе клавиша, первоначально нажатая до появления дерева, могла бы
+навсегда остаться в игровом словаре удержания.
+
+Первоначальная запись подтверждала исходный код. Физическая проверка 0.1.3
+и слышимость перечислены в текущем статусе выше. Для действия остаются обязательны живой активный владелец,
+видимость всей цепочки Canvas/CanvasGroup, Interactable и ownership scope.
 
 - 2026-10-12: добавлена форма журнала; игровые данные не подставлялись.
 - 2026-10-12: подтверждены GOG 1.61, Mono/x64, Unity и loader; плагин 0.1.1

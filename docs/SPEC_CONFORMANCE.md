@@ -13,12 +13,12 @@
 
 | Требование | Реализация / проверка | Граница |
 | --- | --- | --- |
-| A1: параллельное дерево | GraphBuilder/KeyGraph; fake UI navigation | Native focus не используется как модель; physical UI adapter ещё нужен |
-| A2: immediate mode | Rerender перед операциями, новый builder; mutation tests | Живое чтение игры — интеграция |
+| A1: параллельное дерево | GraphBuilder/KeyGraph; TitleUiBindings | Меню использует независимое дерево; native selection только для текстового редактора |
+| A2: immediate mode | Rerender, новый builder; TitleUiBindings/LiveViewSelection | World читается в callback и освобождается; view/delegates не сохраняются |
 | A3: identity, не render reference | ControlId; reference/structural/backward survivor tests | Domain id конкретной карты нужно найти |
 | A4: announce once | Navigator.AnnounceLanding, differ/direct memory; speech/sound-failure tests | Игровые hooks не должны добавлять сторонние focus Speak |
-| A5: оригинальные handlers | Vtable invokers; scope model | Игровые action bindings выключены; passive PressStart не вызывает действия |
-| A6: видимость как у зрячего | PressStartReader проверяет model/view/text/Canvas, анимацию и блокирующий PopupUI | Проверено только чтение стартовой подсказки GOG 1.61; другие экраны остаются blocker |
+| A5: оригинальные handlers | ARButton.Handle, Button/Toggle.OnSubmit, AllSettingsUI.Close, TMP selection/click | Ограниченный стартовый путь 0.1.3; полный UI остаётся M2–M5 |
+| A6: видимость как у зрячего | Живые Model.Views, active/Canvas/CanvasGroup/TMP, top modal, Interactable | Стартовая сцена GOG 1.61; скрытые игровые данные не читаются |
 | A7: provenance речи | Interrupt для прямого input, queue для differ/Live | Native очереди нужно проверить с настоящим NVDA |
 | A8: локализация | Localizer и таблицы ru/en, включая стартовые сообщения | PressStart передаёт текущий игровой текст; семантика icon text ещё требует интеграции |
 | P1–P9 | Подробная таблица в ARCHITECTURE.md | Особо P4: ownership model не заменяет физические hooks |
@@ -76,15 +76,20 @@
 
 ## Четыре пути ввода: раздел 8
 
-| Путь | Статус |
+| Путь | Статус 0.1.3 |
 | --- | --- |
-| Poller мода | Tracker снимков проверен в 11 сценариях; 0.1.2 наблюдает перед PerformGUI. Порядок относительно всех игровых путей и подавление не проверены |
-| Global keymap/Rewired | Модель claims по chord/frame есть; найден DeliverReInputEvent, добавлен необязательный наблюдатель. Подавление и live maps ещё не подключены |
-| UI focus/Submit | Ownership scope и suppression API проверены переносимо; добавлены наблюдатели Focus/ARButton. Реальные guards и отдельный EventSystem путь не проверены |
-| Exclusive modal | Runtime policy проверена; полная физическая exclusivity ожидает host |
+| Poller мода | Early Update и prefixes TitleScreen, GameUI, EventSystem; once/frame, held/release/blur; 11 тестов tracker и 8 новых регрессий |
+| Global keymap/Rewired | Живые enabled keyboard maps; suppress только присвоенных источников. UINaviAction использует фактические Horizontal/Vertical |
+| UI focus/Submit | Own-action scope; Focus/ARButton и Unity Button/Toggle/Move guards; открывающий Enter защищён и в TMP/InputField.KeyPressed |
+| Exclusive modal | Только собственная справка Ctrl+F1. GameUI, Rewired, selected-object keyboard gate; Escape возвращает сохранённый cursor |
 
-Raw capture, native text entry и неперехватываемые скринридером сочетания входят
-в обязательный M1 gate. Полное muted input допускается только для mod-owned modal.
+Меню, физический повтор, Alt+Tab, справка, rebind/cancel и возврат проверены
+в игре с NVDA; native text capture и набор/удаление также подтверждены.
+Речевой просмотр текста остаётся M2; сценарий — в M1_VERIFICATION.md.
+Raw/text отключают навигацию и поиск. Unknown chords вне собственной modal
+проходят игре; KeyUp не мешает штатной очистке held state. Exit/disable/failure
+освобождают ownership; Dispose снимает только собственные Harmony patches.
+Полное muted input допускается только для mod-owned modal.
 
 ## Экраны: раздел 9
 

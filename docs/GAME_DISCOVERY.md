@@ -15,10 +15,11 @@ Windows inventory внешнего Steam depot даёт полезные ори�
 
 В публичных исходниках нет игровых DLL и декомпиляции. В версии 0.1.1 найден
 точный observation target TitleScreen.LateUpdate для пассивного чтения;
-активные Rewired/action/ownership hooks остаются неподключёнными.
-В 0.1.2 добавлено отключённое по умолчанию наблюдение за PerformGUI,
-Rewired delivery, focus routing и кнопками. Оно не подавляет ввод и ещё не
-испытано в игре; найденные связи — в research/title-input-bindings.md.
+в 0.1.3 подключён ограниченный стартовый input host с живыми Rewired maps,
+original-handler scope и EventSystem guards. Он требует точные SHA-256/MVID
+и явный EnableTitleInput. Меню/повтор/возврат проверены с NVDA; полный результат
+и границы — в M1_VERIFICATION.md. История исследования 0.1.2 сохранена в
+research/title-input-bindings.md.
 Профиль `unbound.example.json` содержит
 нулевые сведения о совместимости. Его нельзя включать как готовый профиль.
 

@@ -118,7 +118,7 @@ function Get-DiagnosticReferences([string]$GamePath, [string]$ManifestPath, [boo
     if ($exe.Count -ne 1 -or $exe[0].binary.architecture -ne 'x64') { throw 'Нужен подтверждённый PE x64 исполняемый файл игры.' }
     $managed = Join-Path $game ($inventory.layout.selected_data_directory + '\Managed')
     Assert-NoReparsePath $managed
-    foreach ($name in @('mscorlib.dll', 'UnityEngine.CoreModule.dll', 'UnityEngine.UIModule.dll', 'UnityEngine.InputLegacyModule.dll', 'UnityEngine.IMGUIModule.dll')) {
+    foreach ($name in @('mscorlib.dll', 'UnityEngine.CoreModule.dll', 'UnityEngine.UIModule.dll', 'UnityEngine.InputLegacyModule.dll', 'UnityEngine.IMGUIModule.dll', 'UnityEngine.UI.dll', 'Unity.TextMeshPro.dll', 'Rewired_Core.dll')) {
         $path = Join-Path $managed $name
         Assert-NoReparsePath $path
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Нет локальной ссылки сборки: $name" }
@@ -140,6 +140,9 @@ function Get-DiagnosticReferences([string]$GamePath, [string]$ManifestPath, [boo
             unity_ui = (Get-FileHash -LiteralPath (Join-Path $managed 'UnityEngine.UIModule.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
             unity_input = (Get-FileHash -LiteralPath (Join-Path $managed 'UnityEngine.InputLegacyModule.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
             unity_imgui = (Get-FileHash -LiteralPath (Join-Path $managed 'UnityEngine.IMGUIModule.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
+            unity_toolkit = (Get-FileHash -LiteralPath (Join-Path $managed 'UnityEngine.UI.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
+            unity_tmp = (Get-FileHash -LiteralPath (Join-Path $managed 'Unity.TextMeshPro.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
+            rewired = (Get-FileHash -LiteralPath (Join-Path $managed 'Rewired_Core.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
         }
     }
 }
@@ -256,7 +259,7 @@ function Get-DiagnosticPackage {
 }
 
 function Assert-MatchingReferences($Package, $References) {
-    foreach ($key in @('game_executable', 'unity_core', 'framework', 'bepinex', 'harmony', 'unity_ui', 'unity_input', 'unity_imgui')) {
+    foreach ($key in @('game_executable', 'unity_core', 'framework', 'bepinex', 'harmony', 'unity_ui', 'unity_input', 'unity_imgui', 'unity_toolkit', 'unity_tmp', 'rewired')) {
         $expectedHash = [string]$Package.Manifest.reference_sha256.$key
         if ($expectedHash -cnotmatch '^[a-f0-9]{64}$' -or $expectedHash -cne $References.ReferenceHashes[$key]) {
             throw 'Локальные игровые/загрузочные файлы отличаются от использованных при сборке. Соберите Diagnostics заново для выбранной GameDir.'
@@ -377,7 +380,7 @@ try {
             catch { Write-Host "Промежуточная папка требует проверки: $stagingPath" }
         }
     }
-    Write-Host 'Установлен диагностический плагин; управление игровыми экранами пока не подключено.'
+    Write-Host 'Плагин установлен. EnableTitleInput включает управление меню только на проверенной сборке; прохождение ещё не готово.'
     Write-Host "Папка: $targetPath"
     Write-Host $(if ($backupPath) { "Прежняя версия: $backupPath" } else { 'Прежней папки плагина не было.' })
     Write-Host $(if ($references.ManifestVerified) { 'Steam-манифест и локальные файлы сопоставлены со сборкой.' } else { 'NonSteam: подтвердите название продукта по игровому диагностическому журналу.' })

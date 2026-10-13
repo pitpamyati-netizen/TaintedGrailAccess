@@ -1,22 +1,25 @@
 {
   "schema_version": 3,
-  "date": "2026-10-12",
+  "date": "2026-10-13",
   "success": true,
   "platform": "Windows x64",
   "sdk": "10.0.301",
-  "method": "scripts/test.ps1 and scripts/build.ps1; MSBuild",
+  "method": "scripts/test.ps1, scripts/build.ps1, scripts/deploy.ps1, optional BindingChecks and user-led NVDA scenario",
   "production_reference_check": true,
   "production_target": "netstandard2.0",
   "test_runtime": "8.0.20",
-  "game_tested": false,
-  "game_test_scope": "Not run for 0.1.2; see historical_game_validation for 0.1.1",
-  "native_speech_tested": false,
-  "native_speech_scope": "Not run for 0.1.2",
+  "game_tested": true,
+  "game_test_scope": "0.1.3 inspected title scene: menu/settings, hold/repeat/Alt+Tab, help, keybinding cancel, popup, native TMP capture/typing/deletion/escape and passive-mode restore; text echo and full gameplay not accepted",
+  "native_speech_tested": true,
+  "native_speech_scope": "NVDA heard by blind user; other backends and full gameplay not accepted",
   "historical_game_validation": {
     "plugin": "0.1.1",
     "game_tested": true,
     "scope": "Plugin load, passive PressStart shown/hidden and one visible text read",
-    "nvda_user_confirmed": ["startup-speech", "start-screen-name-and-visible-prompt"],
+    "nvda_user_confirmed": [
+      "startup-speech",
+      "start-screen-name-and-visible-prompt"
+    ],
     "input_arbitration_verified": false,
     "full_path_accepted": false,
     "installation_and_backup_verified": true,
@@ -26,27 +29,61 @@
     "unity_version": "2020.3.23f1",
     "backend": "Mono",
     "loader": "BepInEx 5.4.23.5",
-    "plugin": "0.1.2",
+    "plugin": "0.1.3",
     "architecture": "x64",
     "build_id": "59087960036481007",
     "application_version": "1.61",
     "storefront": "GOG"
   },
   "levels": {
-    "input_arbitration_verified": false,
-    "in_game_tested": [],
+    "input_arbitration_verified": true,
+    "in_game_tested": [
+      "title-menu",
+      "settings-toggle-state-and-single-original-call",
+      "rewired-gameui-suppression",
+      "repeat-and-hold",
+      "alt-tab",
+      "exclusive-help-return",
+      "keybinding-cancel",
+      "popup-no-return",
+      "disabled-host-passive-mode",
+      "native-tmp-focused-selected-typing-deletion-and-escape"
+    ],
     "portable_tested": true,
     "full_path_accepted": false,
     "implemented": [
       "passive-start-prompt",
-      "live-text-provider",
-      "exact-TG.Main-fingerprint-guard",
-      "keyboard-snapshot-tracker",
-      "bounded-opt-in-title-input-audit"
+      "exact-game-and-input-dependency-fingerprint-guards",
+      "early-physical-keyboard-poll",
+      "held-key-release-and-window-quarantine",
+      "live-rewired-contributor-claims",
+      "original-handler-ownership-scope",
+      "game-and-toolkit-submit-guards",
+      "mod-owned-exclusive-help",
+      "raw-and-real-text-stand-down",
+      "title-settings-toggle-keybinding-popup-adapters",
+      "live-non-main-view-selection",
+      "scene-exit-input-release"
     ],
     "compiled_with_game": true,
-    "blind_user_accepted": [],
-    "game_actions_enabled": false
+    "blind_user_accepted": [
+      "menu-speech",
+      "repeat-and-hold",
+      "alt-tab",
+      "help-and-return",
+      "keybinding-cancel",
+      "popup-no-return",
+      "native-text-no-graph-navigation-and-escape"
+    ],
+    "game_actions_enabled": true,
+    "m1_accepted": true,
+    "game_action_scope": "Explicit EnableTitleInput, inspected title scene and original UI handlers; unbound example remains disabled",
+    "pending": [],
+    "limitations": [
+      "native-text-character-echo-and-spoken-editing-not-implemented-M2",
+      "full-gameplay-M2-to-M6-not-accepted",
+      "gamepad-other-builds-and-other-speech-backends-not-accepted"
+    ]
   },
   "results": [
     {
@@ -58,7 +95,7 @@
     {
       "failed": 0,
       "project": "Runtime",
-      "passed": 45,
+      "passed": 53,
       "phase": "run"
     },
     {
@@ -80,9 +117,16 @@
       "exit_code": 0
     },
     {
-      "project": "Deployment 0.1.2",
-      "phase": "not-run",
-      "tested": false
+      "project": "Deployment 0.1.3",
+      "phase": "installed-and-game-run",
+      "tested": true,
+      "backup_verified": true
+    },
+    {
+      "project": "BindingChecks",
+      "phase": "metadata-with-game",
+      "exit_code": 0,
+      "scope": "Exact TitleUiBindings constructor resolved; no Unity objects, patches or game actions"
     }
   ]
 }
