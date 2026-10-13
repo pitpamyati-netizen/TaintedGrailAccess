@@ -1,10 +1,31 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using TaintedGrailAccess.Graph;
 
 namespace TaintedGrailAccess.Runtime
 {
+    /// <summary>Stable anonymous labels by model identity, without retaining discarded models or any views.</summary>
+    public sealed class ExplorationPlaceNames
+    {
+        private sealed class Entry
+        {
+            public readonly int Number;
+            public Entry(int number) { Number = number; }
+        }
+        private ConditionalWeakTable<object, Entry> _names = new ConditionalWeakTable<object, Entry>();
+        private int _next;
+        public int Number(object instance)
+        {
+            if (instance == null) throw new ArgumentNullException(nameof(instance));
+            return _names.GetValue(instance, _ => new Entry(Interlocked.Increment(ref _next))).Number;
+        }
+        /// <summary>Called on the game thread when the exploration world is released.</summary>
+        public void Reset() { _names = new ConditionalWeakTable<object, Entry>(); _next = 0; }
+    }
+
     /// <summary>Map geometry only. Coordinates are game map units, never screen pixels.</summary>
     public struct MapPoint
     {

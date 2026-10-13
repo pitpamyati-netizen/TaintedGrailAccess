@@ -430,7 +430,8 @@ namespace TaintedGrailAccess.BepInExHost
                         if (CombatCanAct(kind) && ModelLive(card) && Actionable(current) && CardHandlerReady(current) && !(bool)ReadProp("combatCard", "IsDissolving", card) &&
                             (kind == "retain" || SkillAvailable(skill))) Invoke(key, () => _combatMethods["combatCardView.ApplyClick"].Invoke(current, null)); },
                     ReadDetail(() => CombatPresentation.CardDetail(true, () => TooltipText(view()), () => ShownText("combatCardView", "skillOnPlayDesc", view()))),
-                    () => OpenCardSpec(kind, view(), "combatCardView"), kind == "retain" ? selection : null);
+                    () => OpenCardSpec(kind, view(), "combatCardView"), kind == "retain" ? selection :
+                        (Func<string>)(() => !CardHandlerReady(view()) ? _text.Get("combat.processing") : null));
             }
             if (cards.Length == 0) EmptyNode(builder, "hand");
             if (kind == "retain")

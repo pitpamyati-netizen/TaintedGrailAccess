@@ -11,11 +11,12 @@ using UnityEngine.UI;
 
 namespace TaintedGrailAccess.BepInExHost
 {
-    /// <summary>Exact GOG 1.61 exploration. Only metadata, speech strings and an owned-move ID survive a frame.</summary>
+    /// <summary>Exact GOG 1.61 exploration. Retains metadata, scalar travel state and weak model labels, never views.</summary>
     internal sealed partial class TitleUiBindings
     {
         private readonly Dictionary<string, MethodInfo> _explorationMethods = new Dictionary<string, MethodInfo>();
         private readonly ExplorationTravelWatch _travelWatch = new ExplorationTravelWatch();
+        private readonly ExplorationPlaceNames _placeNames = new ExplorationPlaceNames();
         private ConstructorInfo _targetChangeConstructor;
         private object _emptyUiPosition;
         private MethodInfo _getPathfinder;
@@ -156,7 +157,8 @@ namespace TaintedGrailAccess.BepInExHost
         private bool LocationInteractable(object location) => (bool)ReadField("locationInteractability", "interactable", ReadProp("location", "Interactability", location));
         private string LocationLabel(object location) => !LocationShown(location) ? null :
             ExplorationPresentation.PlaceLabel(LocationDisclosed(location), () => ShownLocationNames(location),
-                () => _text.Get("exploration.unnamedPlace"), () => _text.Get("exploration.unknownPlace"));
+                () => _text.Get("exploration.numberedPlace", _placeNames.Number(location)), () => AnonymousLocationLabel(location));
+        private string AnonymousLocationLabel(object location) => _text.Get("exploration.numberedUnknownPlace", _placeNames.Number(location));
         private string BriefLabel(object brief)
         {
             if (!ModelLive(brief)) return null;
@@ -294,13 +296,16 @@ namespace TaintedGrailAccess.BepInExHost
             }
             if (!MapInteractive()) return;
             builder.BeginStop("exploration.objects"); builder.PushContext(_text.Get("exploration.objects"));
-            var locations = ShownLocations().OrderBy(location => Point(HeroCoords()).DistanceTo(Point(LocationCoords(location)))).ToArray();
+            var locations = ShownLocations().ToArray();
+            // Assign once before distance sorting; walking, temporary hiding and disclosure keep the same number.
+            foreach (var location in locations) _placeNames.Number(location);
+            locations = locations.OrderBy(location => Point(HeroCoords()).DistanceTo(Point(LocationCoords(location)))).ToArray();
             foreach (var location in locations)
             {
                 var current = location;
                 ExplorationPresentation.Add(builder, current, InstanceKey("exploration.location", current),
                     () => LocationDisclosed(current), () => LocationShown(current),
-                    () => LocationLabel(current), () => _text.Get("exploration.unknownPlace"),
+                    () => LocationLabel(current), () => AnonymousLocationLabel(current),
                     () => LocationGeometry(current), () => LocationReason(current), () => MoveToLocation(current),
                     ReadDetail(() => ExplorationCanAct(kind) && LocationShown(current) ? JoinText(new[] { LocationGeometry(current), LocationReason(current), RouteText(InspectRoute(current)) }) : null));
             }
@@ -402,7 +407,7 @@ namespace TaintedGrailAccess.BepInExHost
             if (_lastWyrdState != null && stamp != _lastWyrdState) _speech?.Speak(WyrdState(), false);
             _lastWyrdState = stamp;
         }
-        public void ClearExploration() { _travelWatch.Reset(); _travelTargetId = null; _lastWyrdState = null; _helpSource = null; }
+        public void ClearExploration() { _travelWatch.Reset(); _placeNames.Reset(); _travelTargetId = null; _lastWyrdState = null; _helpSource = null; }
         public void PauseExploration() { _travelWatch.Pause(Time.unscaledTime); }
     }
 }

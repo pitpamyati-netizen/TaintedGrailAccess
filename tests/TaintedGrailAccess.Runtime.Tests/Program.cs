@@ -16,6 +16,7 @@ namespace TaintedGrailAccess.Runtime.Tests
             ("exploration_route_detour_missing_partial_invalid_and_tolerance", ExplorationTests.Routes),
             ("exploration_estimate_is_passive_and_original_handler_decides_movement", ExplorationTests.RouteEstimateDoesNotVetoOriginalAction),
             ("exploration_place_names_never_collapse_to_punctuation_or_reveal_hidden_names", ExplorationTests.SpokenPlaceLabels),
+            ("exploration_numbered_names_keep_identity_across_reorder_disclosure_and_world_reset", ExplorationTests.StablePlaceNumbers),
             ("exploration_hover_information_does_not_block_original_action", ExplorationTests.HoverInformationIsNotModal),
             ("exploration_disclosure_no_hidden_reads_passive_and_stale", ExplorationTests.DisclosureAndPassiveInspection),
             ("exploration_equal_names_reorder_remove_and_procedural_replacement", ExplorationTests.IdentityAndProceduralReplacement),
@@ -59,6 +60,7 @@ namespace TaintedGrailAccess.Runtime.Tests
             ("initial_live_state_is_not_duplicated", InitialLiveBaseline),
             ("async_live_delta_queues_only_changed_part", AsyncLiveDelta),
             ("synchronous_toggle_interrupts_and_rebaselines", SyncToggleBaseline),
+            ("combat_accepted_card_processing_announced_once_without_duplicate_action", CardProcessingBaseline),
             ("slider_repeat_feedback_is_immediate_without_live_duplicate", SliderFeedback),
             ("unseated_overlay_bubbles_enter_tooltip_secondary", UnseatedBubbles),
             ("tab_seats_overlay_and_boundary_blurs", TabSeatingAndBlur),
@@ -233,6 +235,29 @@ namespace TaintedGrailAccess.Runtime.Tests
                 Equal("On", rig.Speech.Lines[0].Text, "State text is immediate.");
                 Check(rig.Speech.Lines[0].Interrupt, "Toggle feedback interrupts.");
                 rig.Step(); Equal(1, rig.Speech.Lines.Count, "Live watch is rebaselined.");
+            }
+        }
+
+        private static void CardProcessingBaseline()
+        {
+            using (var rig = new Rig())
+            {
+                var card = new object(); bool ready = true; int plays = 0;
+                const string processing = "Игра выполняет действие. Дождитесь завершения.";
+                Func<string> state = () => ready ? null : processing;
+                rig.Add("combat", b => CombatPresentation.Add(b, card, "card", () => "Удар", null,
+                    state, null, () => { if (ready) { plays++; ready = false; } }, null, stateText: state));
+                rig.Step(); rig.Speech.Clear(); rig.Step(Key(UiKey.Enter));
+                Equal(1, plays, "The original card action is dispatched once.");
+                Equal(1, rig.Speech.Lines.Count, "Accepted action has one truthful processing announcement.");
+                Equal(processing, rig.Speech.Lines[0].Text, "Processing must not claim the accepted card is unavailable.");
+                Check(rig.Speech.Lines[0].Interrupt, "Immediate action feedback interrupts and rebaselines live status.");
+                rig.Step(); rig.Step(Key(UiKey.Enter));
+                Equal(1, plays, "The detached original handler cannot be invoked a second time while busy.");
+                Equal(1, rig.Speech.Lines.Count, "A stable busy state is not repeated after the accepted action or another Enter.");
+                ready = true; rig.Step(); rig.Step(Key(UiKey.Enter));
+                Equal(2, plays, "After the original handler is restored, a new press can play again.");
+                Equal(2, rig.Speech.Lines.Count, "Each accepted play has exactly one processing announcement.");
             }
         }
 

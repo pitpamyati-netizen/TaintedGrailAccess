@@ -5,7 +5,7 @@
     <Nullable>disable</Nullable>
     <AssemblyName>TaintedGrailAccess.BepInEx</AssemblyName>
     <RootNamespace>TaintedGrailAccess.BepInExHost</RootNamespace>
-    <Version>0.4.2</Version>
+    <Version>0.4.3</Version>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>

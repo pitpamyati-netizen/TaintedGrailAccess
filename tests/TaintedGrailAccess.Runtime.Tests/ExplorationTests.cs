@@ -87,6 +87,26 @@ namespace TaintedGrailAccess.Runtime.Tests
             Check(ExplorationPresentation.PlaceLabel(true, () => new[] { "Мельница 2", "Кузница" }, () => "?", () => "?") == "Мельница 2",
                 "The first actual visible name keeps its original language and numbers.");
         }
+        public static void StablePlaceNumbers()
+        {
+            var names = new ExplorationPlaceNames(); var first = new object(); var second = new object();
+            Check(names.Number(first) == 1 && names.Number(second) == 2, "Distinct visible models get distinct own labels.");
+            foreach (var instance in new[] { second, first, second, first })
+                Check(names.Number(instance) == (ReferenceEquals(instance, first) ? 1 : 2), "Reordering and temporary hiding do not renumber places.");
+            Func<string> fallback = () => "Место " + names.Number(first);
+            Func<string> anonymous = () => "Нераскрытое место " + names.Number(first);
+            int hiddenReads = 0;
+            Func<IEnumerable<string>> shown = () => { hiddenReads++; return new[] { "…" }; };
+            Check(ExplorationPresentation.PlaceLabel(false, shown, fallback, anonymous) == "Нераскрытое место 1" && hiddenReads == 0,
+                "An anonymous numbered marker never reads a hidden game name.");
+            Check(ExplorationPresentation.PlaceLabel(true, shown, fallback, anonymous) == "Место 1",
+                "Disclosure preserves the same number when the game has no meaningful name.");
+            Check(ExplorationPresentation.PlaceLabel(true, () => new[] { "Кузница" }, fallback, anonymous) == "Кузница",
+                "A real shown game name has priority over the mod's assigned name.");
+            Check(names.Number(new object()) == 3, "A procedural replacement gets a new identity, even at an old list position.");
+            names.Reset(); Check(names.Number(second) == 1 && names.Number(first) == 2, "A released world starts a fresh numbering registry.");
+        }
+
         public static void HoverInformationIsNotModal()
         {
             Check(!ExplorationPresentation.BlocksExploration(true, true), "Visible hover information does not block the scanner's original action.");
