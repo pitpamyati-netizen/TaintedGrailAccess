@@ -157,6 +157,7 @@
       "exploration-full-run-M4-to-M6-not-implemented-or-accepted",
       "selected-readouts-hand-menu-target-cancel-one-post-combat-reward-path-enter-hold-and-alt-tab-do-not-cover-search-hold-target-disappearance-or-full-M3",
       "0.3.3-post-combat-reward-accepted-for-reported-class-egery-only-reward-type-unspecified",
+      "user-reported-only-class-egery-available-other-class-mechanics-await-normal-unlock-and-live-NVDA-check",
       "0.3.3-enter-confirm-hold-single-play-accepted-focus-return-not-explicitly-reported"
     ],
     "full_path_scope": "M2 first path from title/new game through tutorial to first combat entry only",
@@ -175,6 +176,15 @@
       "result": "not-encountered",
       "user_report": "Такое окно пока не встречалось",
       "accepted": false
+    },
+    "m3_class_availability": {
+      "version": "0.3.3",
+      "source": "user-report",
+      "available_labels": [
+        "Егерь"
+      ],
+      "user_report": "Пока доступен только Егерь",
+      "other_class_variants_accepted": false
     }
   },
   "results": [
