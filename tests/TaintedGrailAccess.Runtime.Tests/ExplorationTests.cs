@@ -74,6 +74,26 @@ namespace TaintedGrailAccess.Runtime.Tests
                     "Ending an actual move short of the target is not reported as arrival.");
             }
         }
+        public static void SpokenPlaceLabels()
+        {
+            int reads = 0;
+            Func<IEnumerable<string>> names = () => { reads++; return new[] { "…", "...", "Кузница" }; };
+            Check(ExplorationPresentation.PlaceLabel(false, names, () => "Место без названия", () => "Нераскрытое место") == "Нераскрытое место" && reads == 0,
+                "A partial marker never reads even a known UI name.");
+            Check(ExplorationPresentation.PlaceLabel(true, names, () => "Место без названия", () => "?") == "Кузница" && reads == 1,
+                "A meaningful displayed name is preferred over an ellipsis.");
+            Check(ExplorationPresentation.PlaceLabel(true, () => new[] { "…", "...", "  ", null, "???" }, () => "Место без названия", () => "?") == "Место без названия",
+                "Punctuation-only game names receive an audible generic label, without inventing an identity.");
+            Check(ExplorationPresentation.PlaceLabel(true, () => new[] { "Мельница 2", "Кузница" }, () => "?", () => "?") == "Мельница 2",
+                "The first actual visible name keeps its original language and numbers.");
+        }
+        public static void HoverInformationIsNotModal()
+        {
+            Check(!ExplorationPresentation.BlocksExploration(true, true), "Visible hover information does not block the scanner's original action.");
+            Check(ExplorationPresentation.BlocksExploration(true, false), "A shown clickable interaction panel remains modal.");
+            Check(!ExplorationPresentation.BlocksExploration(false, false) && !ExplorationPresentation.BlocksExploration(false, true),
+                "Invisible panels cannot own exploration input.");
+        }
         public static void DisclosureAndPassiveInspection()
         {
             bool disclosed = false, shown = true; int names = 0, moves = 0, inspections = 0;

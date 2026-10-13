@@ -46,6 +46,15 @@ namespace TaintedGrailAccess.Runtime
     /// <summary>Passive list presentation. Actions recheck disclosure and readiness at invocation.</summary>
     public static class ExplorationPresentation
     {
+        /// <summary>Names already reduced to spoken, visible UI text. Never query hidden name providers.</summary>
+        public static string PlaceLabel(bool disclosed, Func<IEnumerable<string>> visibleNames, Func<string> unnamed, Func<string> anonymous)
+        {
+            if (!disclosed) return anonymous();
+            return visibleNames().FirstOrDefault(name => name != null && name.Any(char.IsLetterOrDigit)) ?? unnamed();
+        }
+        /// <summary>Passive hover information is not an exclusive interaction panel.</summary>
+        public static bool BlocksExploration(bool visible, bool hoverOnly) => visible && !hoverOnly;
+
         /// <summary>Eight directions relative to the current game camera's horizontal forward vector.</summary>
         public static string Direction(MapPoint origin, MapPoint target, double cameraForwardX, double cameraForwardZ)
         {

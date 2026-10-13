@@ -58,6 +58,19 @@ MVID `78793877-83a2-4bfc-970d-974256f05d98`. Assembly-CSharp также пров
 - `LocationBrief/VLocationBrief`: показанное имя и живые кнопки; закрытие
   проходит через `VModalBlocker.Handle(UIEvent)` и ModalDismissed, как клик
   по исходной подложке. Внутренний список будущих действий/врагов не экспортируется.
+  `IsOnHoverInfo: bool` отделяет подсказку от окна выбора: только второе
+  блокирует движение. В 0.4.2 проверяется вся коллекция живых LocationBrief,
+  а не первая модель, которая может оказаться обычной подсказкой.
+- Имя читается из показанного `VLocationBrief.nameText`, затем из
+  `MapMarker.TooltipText: string` на показанном fullyIcon, затем из раскрытого
+  `Location.DisplayName`. MapMarker сохраняет текст при создании Place;
+  DisplayName применяет текущие LocationState/ILocationInfoModifier overrides.
+  `LocString.ToString()` использует исходную LocalizationManager.GetTranslation.
+  Значение «…» не даёт произносимого имени и заменяется общей подписью мода,
+  без чтения исходного скрытого Template.displayName или перевода заново.
+- `HeroInteraction.ShouldHappen(Hero,Place)` требует не-Invisible действий
+  и `Location.Interactability.interactable`. Менгир с false остаётся доступен
+  для подхода, но не взаимодействия; в 0.4.1 это подтверждено журналом.
 
 AstarPathfindingProject SHA-256 `2e45f26e3a09194232aebf342f6c5aa22627f6533d409b30e00c2278fa2778fe`,
 MVID `48d59566-cb6c-457f-8635-ba85dab68d1c`. Совпадение проверяется до

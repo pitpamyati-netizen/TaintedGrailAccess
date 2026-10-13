@@ -57,6 +57,7 @@ namespace TaintedGrailAccess.BepInExHost
             Field("mapCoords", "x", typeof(float)); Field("mapCoords", "z", typeof(float));
             Field("mapMarker", "reference", _types["markerReference"]);
             Prop("markerReference", "ParentModel"); Prop("markerReference", "MapCoords", _types["mapCoords"]);
+            Prop("markerReference", "TooltipText", typeof(string));
             foreach (var name in new[] { "fullyIcon", "partlyIcon" }) Field("mapMarkerView", name, typeof(Image));
             Prop("mapCameraView", "Camera", typeof(Transform));
             Prop("move", "TargetPosition", _types["mapCoords"]); Prop("move", "CurrentPosition", _types["mapCoords"]);
@@ -93,7 +94,7 @@ namespace TaintedGrailAccess.BepInExHost
         }
         private bool ExplorationActive(string kind)
         {
-            if (kind == "locationBrief") return View(kind) != null && !(bool)ReadProp(kind, "IsOnHoverInfo", Find(kind));
+            if (kind == "locationBrief") return ClickableLocationBrief() != null;
             // Stay registered under dialogs and fights so the scanner's GraphState survives covering.
             return ModelLive(Find("exploration")) && Find("mapStateStack") != null;
         }
@@ -102,9 +103,12 @@ namespace TaintedGrailAccess.BepInExHost
             if (_actionScreen != kind || HelpOpen || Capturing() || !ExplorationActive(kind)) return false;
             if (View("settings") != null || View("popup") != null || View("combatMenu") != null || StoryView() != null || CombatActive("combat")) return false;
             var top = TopLayerModel();
-            return kind == "locationBrief" ? top == null || ReferenceEquals(top, Find(kind)) :
-                MapInteractive() && top == null && View("locationBrief") == null;
+            return kind == "locationBrief" ? top == null || ReferenceEquals(top, ClickableLocationBrief()) :
+                MapInteractive() && top == null && !ExplorationActive("locationBrief");
         }
+        private object ClickableLocationBrief() => All("locationBrief").FirstOrDefault(model => ModelLive(model) &&
+            ExplorationPresentation.BlocksExploration(ViewOf(model, _types["locationBriefView"]) != null,
+                (bool)ReadProp("locationBrief", "IsOnHoverInfo", model)));
 
         private IEnumerable<object> ShownLocations()
         {
@@ -149,6 +153,43 @@ namespace TaintedGrailAccess.BepInExHost
             return false;
         }
         private object LocationCoords(object location) => ReadProp("location", "HeroTarget", location);
+        private bool LocationInteractable(object location) => (bool)ReadField("locationInteractability", "interactable", ReadProp("location", "Interactability", location));
+        private string LocationLabel(object location) => !LocationShown(location) ? null :
+            ExplorationPresentation.PlaceLabel(LocationDisclosed(location), () => ShownLocationNames(location),
+                () => _text.Get("exploration.unnamedPlace"), () => _text.Get("exploration.unknownPlace"));
+        private string BriefLabel(object brief)
+        {
+            if (!ModelLive(brief)) return null;
+            var place = ReadProp("locationBrief", "Place", brief);
+            if (_types["location"].IsInstanceOfType(place)) return LocationLabel(place);
+            var view = ViewOf(brief, _types["locationBriefView"]);
+            return view == null ? null : ExplorationPresentation.PlaceLabel(true,
+                () => new[] { PlainGameText(ShownText("locationBriefView", "nameText", view)) },
+                () => _text.Get("exploration.unnamedPlace"), () => _text.Get("exploration.unknownPlace"));
+        }
+        private IEnumerable<string> ShownLocationNames(object location)
+        {
+            foreach (var brief in All("locationBrief"))
+            {
+                if (!ModelLive(brief) || !ReferenceEquals(ReadProp("locationBrief", "Place", brief), location)) continue;
+                var view = ViewOf(brief, _types["locationBriefView"]);
+                if (view != null && view.transform.lossyScale.sqrMagnitude > 0.000001f)
+                    yield return PlainGameText(ShownText("locationBriefView", "nameText", view));
+            }
+            // MapMarker.TooltipText is the name actually shown on the full icon, created by Place.
+            // It can differ from a later DisplayName override. Never read it for a partial icon.
+            foreach (var marker in All("mapMarker"))
+            {
+                if (!ModelLive(marker)) continue;
+                var reference = ReadField("mapMarker", "reference", marker);
+                if (!ModelLive(reference) || !ReferenceEquals(ReadProp("markerReference", "ParentModel", reference), location)) continue;
+                var view = ViewOf(marker, _types["mapMarkerView"]);
+                var icon = view == null ? null : ReadField("mapMarkerView", "fullyIcon", view) as Image;
+                if (icon != null && Visible(icon) && icon.enabled)
+                    yield return PlainGameText((string)ReadProp("markerReference", "TooltipText", reference));
+            }
+            yield return PlainGameText((string)ReadProp("location", "DisplayName", location));
+        }
         private MapPoint Point(object coords) => new MapPoint((float)ReadField("mapCoords", "x", coords), (float)ReadField("mapCoords", "z", coords));
         private object HeroCoords() => ReadProp("exploration", "Coords", Find("exploration"));
         private string LocationGeometry(object location)
@@ -163,7 +204,7 @@ namespace TaintedGrailAccess.BepInExHost
         private string LocationReason(object location)
         {
             if (!LocationDisclosed(location)) return _text.Get("exploration.partial");
-            return JoinText(new[] { (bool)ReadField("locationInteractability", "interactable", ReadProp("location", "Interactability", location)) ? null : _text.Get("exploration.inactive"), LocationHazard(location) });
+            return JoinText(new[] { LocationInteractable(location) ? null : _text.Get("exploration.inactive"), LocationHazard(location) });
         }
         private string LocationHazard(object location)
         {
@@ -208,6 +249,9 @@ namespace TaintedGrailAccess.BepInExHost
             { _speech?.Speak(_text.Get("exploration.blocked"), true); return; }
             if (!Point(HeroCoords()).IsFinite || !Point(LocationCoords(location)).IsFinite)
             { _speech?.Speak(_text.Get("exploration.invalidTarget"), true); return; }
+            var distance = Point(HeroCoords()).DistanceTo(Point(LocationCoords(location)));
+            _log.Write("exploration.action", "target=" + ReadProp("model", "ID", location) + "; distance=" + distance +
+                "; disclosed=" + LocationDisclosed(location) + "; interactable=" + (LocationDisclosed(location) && LocationInteractable(location)));
             // FindWaypoints is a passive estimate with different constraints/modifiers from
             // HeroMovement.PlanMove's FindWaypointsFor(Hero.Seeker). It cannot veto an original
             // action, including the game's close-click interaction. Only the game plans movement.
@@ -225,19 +269,24 @@ namespace TaintedGrailAccess.BepInExHost
             if (!MapInteractive() || ExplorationActive("locationBrief") || StoryView() != null)
             { _travelWatch.Reset(); _travelTargetId = null; return; }
             if (!accepted || !_types["move"].IsInstanceOfType(move) || !ModelLive(move))
-            { _speech?.Speak(_text.Get("exploration.noMove"), true); return; }
+            {
+                var message = LocationDisclosed(location) && distance < 4 ?
+                    LocationInteractable(location) ? "exploration.atNoAction" : "exploration.atInactive" : "exploration.noMove";
+                _speech?.Speak(_text.Get(message), true); return;
+            }
             if (ReferenceEquals(previousMove, move)) { _speech?.Speak(_text.Get("exploration.noMove"), true); return; }
             _travelTargetId = (string)ReadProp("model", "ID", location);
             _travelWatch.Begin((string)ReadProp("model", "ID", move), Point(HeroCoords()), Time.unscaledTime, Point(HeroCoords()).DistanceTo(Point(LocationCoords(location))));
-            _speech?.Speak(_text.Get("exploration.started"), true);
+            _speech?.Speak(JoinText(new[] { _text.Get("exploration.started"), LocationDisclosed(location) && !LocationInteractable(location) ? _text.Get("exploration.inactive") : null }), true);
         }
 
         private void BuildExploration(string kind, GraphBuilder builder)
         {
             if (kind == "locationBrief")
             {
-                var view = View(kind);
-                TextNode(builder, view, "locationBriefView", "nameText", "exploration.brief.name");
+                var brief = ClickableLocationBrief();
+                var view = ViewOf(brief, _types["locationBriefView"]);
+                builder.Add(ControlId.Structural("exploration.brief.name"), new NodeVtable(new NodeAnnouncement(() => BriefLabel(brief))));
                 foreach (Component button in view.GetComponentsInChildren(_types["button"], false))
                     AddButton(builder, kind, button, ControlId.ForObject(button), "exploration.brief.action");
                 builder.Add(ControlId.Structural("exploration.brief.close"), new NodeVtable(new NodeAnnouncement(() => _text.Get("exploration.close"))) { OnActivate = () => ExplorationBack(kind) });
@@ -251,7 +300,7 @@ namespace TaintedGrailAccess.BepInExHost
                 var current = location;
                 ExplorationPresentation.Add(builder, current, InstanceKey("exploration.location", current),
                     () => LocationDisclosed(current), () => LocationShown(current),
-                    () => (string)ReadProp("location", "DisplayName", current), () => _text.Get("exploration.unknownPlace"),
+                    () => LocationLabel(current), () => _text.Get("exploration.unknownPlace"),
                     () => LocationGeometry(current), () => LocationReason(current), () => MoveToLocation(current),
                     ReadDetail(() => ExplorationCanAct(kind) && LocationShown(current) ? JoinText(new[] { LocationGeometry(current), LocationReason(current), RouteText(InspectRoute(current)) }) : null));
             }
@@ -305,7 +354,7 @@ namespace TaintedGrailAccess.BepInExHost
         {
             if (kind == "exploration") return CancelExplorationMove();
             if (kind != "locationBrief" || !ExplorationCanAct(kind)) return false;
-            var blocker = ViewOf(Find(kind), _types["mapBlocker"]);
+            var blocker = ViewOf(ClickableLocationBrief(), _types["mapBlocker"]);
             if (blocker == null) return false;
             Invoke("exploration.brief.close", () => _explorationMethods["brief.close"].Invoke(blocker, new[] { _submit }));
             return true;
@@ -338,7 +387,8 @@ namespace TaintedGrailAccess.BepInExHost
             if (state != null)
             {
                 _log.Write("exploration.travel", state);
-                _speech?.Speak(state == "progress" ? TravelState() : _text.Get("exploration." + state), false);
+                _speech?.Speak(state == "progress" ? TravelState() : state == "arrived" && targetShown &&
+                    LocationDisclosed(target) && !LocationInteractable(target) ? _text.Get("exploration.atInactive") : _text.Get("exploration." + state), false);
                 if (!_travelWatch.IsTracking) _travelTargetId = null;
             }
             if (_actionScreen != "exploration" || !MapInteractive() || HelpOpen || Capturing()) return;
