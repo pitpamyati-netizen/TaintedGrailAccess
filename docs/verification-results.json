@@ -64,7 +64,8 @@
       "0.3.1-native-menu-opened-and-immediately-closed-on-held-escape",
       "0.3.2-game-menu-open-hold-arrow-reading-close-reopen-with-nvda",
       "0.3.2-multiple-enemies-target-cancel-escape-hold-hand-return-and-enter-target-enter-with-nvda",
-      "0.3.3-post-combat-resource-names-and-available-reward-path-with-nvda"
+      "0.3.3-post-combat-resource-names-and-available-reward-path-with-nvda",
+      "0.3.3-target-confirmation-enter-hold-plays-card-once-with-nvda"
     ],
     "portable_tested": true,
     "full_path_accepted": true,
@@ -127,7 +128,8 @@
       "0.3.1-hand-focus-after-first-card-play-and-empty-hand",
       "0.3.2-game-menu-open-hold-arrow-reading-close-reopen-with-nvda",
       "0.3.2-multiple-enemies-target-cancel-escape-hold-hand-return-and-enter-target-enter-with-nvda",
-      "0.3.3-post-combat-resource-names-and-available-reward-path-with-nvda"
+      "0.3.3-post-combat-resource-names-and-available-reward-path-with-nvda",
+      "0.3.3-target-confirmation-enter-hold-plays-card-once-with-nvda"
     ],
     "game_actions_enabled": true,
     "m1_accepted": true,
@@ -138,7 +140,7 @@
       "m3-multistep-selection-and-death-of-target",
       "m3-class-variants-and-conversion",
       "m3-defeat-and-remaining-reward-variants",
-      "m3-repeat-cancel-alt-tab",
+      "m3-held-enter-alt-tab-and-reentry",
       "retained-card-native-endturn-live-reproduction",
       "final-quickcast-on-off-single-multiple-target-and-repeat-replay",
       "info-readouts-hold-layout-reserved-modifier-live-check",
@@ -152,8 +154,9 @@
       "class-hint-image-is-not-transcribed",
       "retained-card-native-endturn-static-early-return-risk",
       "exploration-full-run-M4-to-M6-not-implemented-or-accepted",
-      "selected-readouts-hand-menu-target-cancel-and-one-post-combat-reward-path-do-not-cover-search-hold-enter-confirm-hold-target-disappearance-or-full-M3",
-      "0.3.3-post-combat-reward-accepted-for-reported-class-egery-only-reward-type-unspecified"
+      "selected-readouts-hand-menu-target-cancel-one-post-combat-reward-path-and-enter-confirm-hold-do-not-cover-search-hold-alt-tab-target-disappearance-or-full-M3",
+      "0.3.3-post-combat-reward-accepted-for-reported-class-egery-only-reward-type-unspecified",
+      "0.3.3-enter-confirm-hold-single-play-accepted-focus-return-not-explicitly-reported"
     ],
     "full_path_scope": "M2 first path from title/new game through tutorial to first combat entry only",
     "full_gameplay_accepted": false,
@@ -164,6 +167,7 @@
     "m3_escape_menu_accepted": true,
     "m3_target_cancel_hold_and_replay_accepted": true,
     "m3_post_combat_resource_names_and_available_reward_path_accepted": true,
+    "m3_enter_hold_single_play_accepted": true,
     "m3_multicard_or_retention_probe": {
       "version": "0.3.3",
       "result": "not-encountered",
