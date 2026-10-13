@@ -20,6 +20,9 @@ namespace TaintedGrailAccess.Graph
         private bool _built;
         private ControlId _requestedStart;
 
+        /// <summary>The screen-owned state used for explicit focus suggestions during this build.</summary>
+        public GraphState State { get { return _state; } }
+
         public GraphBuilder(GraphState state)
         {
             _state = state ?? throw new ArgumentNullException(nameof(state));

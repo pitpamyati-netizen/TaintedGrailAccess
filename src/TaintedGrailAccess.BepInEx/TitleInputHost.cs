@@ -53,9 +53,11 @@ namespace TaintedGrailAccess.BepInExHost
 
         private static readonly KeyCode[] Keys = { KeyCode.UpArrow, KeyCode.RightArrow, KeyCode.DownArrow,
             KeyCode.LeftArrow, KeyCode.Tab, KeyCode.Home, KeyCode.End, KeyCode.Return, KeyCode.KeypadEnter,
-            KeyCode.Escape, KeyCode.Backspace, KeyCode.Space, KeyCode.F1 };
+            KeyCode.Escape, KeyCode.Backspace, KeyCode.Space, KeyCode.F1,
+            KeyCode.B, KeyCode.H, KeyCode.I, KeyCode.P, KeyCode.R, KeyCode.Y };
         private static readonly UiKey[] Logical = { UiKey.Up, UiKey.Right, UiKey.Down, UiKey.Left, UiKey.Tab,
-            UiKey.Home, UiKey.End, UiKey.Enter, UiKey.Enter, UiKey.Escape, UiKey.Backspace, UiKey.Space, UiKey.F1 };
+            UiKey.Home, UiKey.End, UiKey.Enter, UiKey.Enter, UiKey.Escape, UiKey.Backspace, UiKey.Space, UiKey.F1,
+            UiKey.B, UiKey.H, UiKey.I, UiKey.P, UiKey.R, UiKey.Y };
 
         public TitleInputHost(ISpeechOutput speech, Localizer text, IRuntimeLog log)
         {
@@ -410,10 +412,13 @@ namespace TaintedGrailAccess.BepInExHost
             if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) modifiers |= Modifiers.Shift;
             if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) modifiers |= Modifiers.Control;
             if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)) modifiers |= Modifiers.Alt;
+            if (Input.GetKey(KeyCode.LeftWindows) || Input.GetKey(KeyCode.RightWindows) ||
+                Input.GetKey(KeyCode.Insert) || Input.GetKey(KeyCode.CapsLock)) modifiers |= Modifiers.Reserved;
             return modifiers;
         }
         private static Modifiers EventModifiers(Event evt) => (evt.shift ? Modifiers.Shift : Modifiers.None) |
-            (evt.control ? Modifiers.Control : Modifiers.None) | (evt.alt ? Modifiers.Alt : Modifiers.None);
+            (evt.control ? Modifiers.Control : Modifiers.None) | (evt.alt ? Modifiers.Alt : Modifiers.None) |
+            (evt.command ? Modifiers.Reserved : Modifiers.None) | (CurrentModifiers() & Modifiers.Reserved);
         private static bool ModifierMatches(ModifierKey modifier)
         {
             var current = CurrentModifiers();

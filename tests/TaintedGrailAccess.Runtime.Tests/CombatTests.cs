@@ -79,6 +79,86 @@ namespace TaintedGrailAccess.Runtime.Tests
             Check(CombatPresentation.CanConfirmSelection(0, null, null, false, true), "Do not invent a minimum for optional selection.");
             Check(!CombatPresentation.CanConfirmSelection(-1, null, null, false, true), "Invalid counts fail closed.");
         }
+        public static void HandFocusAcrossSectionsAndTargeting()
+        {
+            var cards = new List<Card> { new Card("first"), new Card("second"), new Card("third") };
+            bool targeting = false;
+            Card pending = null;
+            var faults = new FaultBoundary(new NullLog());
+            var screens = new ScreenManager(faults);
+            var combat = new TestScreen("combat", 0, () => true, builder =>
+            {
+                builder.BeginStop("status"); builder.Add(ControlId.Structural("hero"), new NodeVtable(new NodeAnnouncement(() => "Герой")));
+                builder.BeginStop("combat.hand");
+                CombatPresentation.KeepHandFocus(builder.State, cards.Select(c => ControlId.Referenced(c, c.Id)).ToArray(), ControlId.Structural("end"));
+                foreach (var card in cards)
+                {
+                    var current = card;
+                    CombatPresentation.Add(builder, current, current.Id, () => current.Label, null, null, null,
+                        () => { pending = current; targeting = true; }, null);
+                }
+                builder.BeginStop("actions"); builder.Add(ControlId.Structural("end"), new NodeVtable(new NodeAnnouncement(() => "Конец хода")));
+            });
+            var target = new TestScreen("target", 1, () => targeting, builder => builder.Add(ControlId.Structural("target"),
+                new NodeVtable(new NodeAnnouncement(() => "Враг")) { OnActivate = () => { cards.Remove(pending); targeting = false; } }));
+            screens.Register(combat); screens.Register(target);
+            var speech = new TestSpeech();
+            using (var runtime = new AccessibilityRuntime(screens, new Navigator(speech, new Localizer(new Dictionary<string, string>()), faults), new InputArbitration()))
+            {
+                long frame = 0;
+                Action<KeyChord[]> step = chords => runtime.Update(++frame, chords);
+                step(Array.Empty<KeyChord>()); step(new[] { new KeyChord(UiKey.Tab) });
+                Check(runtime.Navigator.Current.Id.Reference == cards[0], "Setup focuses first card after hero section.");
+                step(new[] { new KeyChord(UiKey.Enter) });
+                Check(screens.Current.Screen.Id == "target", "Card opens target selection.");
+                targeting = false; step(Array.Empty<KeyChord>());
+                Check(runtime.Navigator.Current.Id.Reference == cards[0], "Cancellation returns to the same unplayed instance.");
+                step(new[] { new KeyChord(UiKey.Enter) }); step(new[] { new KeyChord(UiKey.Enter) });
+                Check(runtime.Navigator.Current.Id.Reference == cards[0] && cards[0].Id == "second", "Deleting first card keeps focus in the hand, not on hero.");
+                cards.Reverse(); step(Array.Empty<KeyChord>());
+                Check(runtime.Navigator.Current.Id.Reference == cards[1], "Reordering retains the same surviving instance.");
+                step(new[] { new KeyChord(UiKey.Enter) }); step(new[] { new KeyChord(UiKey.Enter) });
+                Check(runtime.Navigator.Current.Id.Reference == cards[0], "Deleting last card chooses a preceding hand survivor.");
+                step(new[] { new KeyChord(UiKey.Enter) }); step(new[] { new KeyChord(UiKey.Enter) });
+                Check(runtime.Navigator.Current.Id.Equals(ControlId.Structural("end")), "Empty hand returns to end turn.");
+                cards.Add(new Card("drawn")); step(Array.Empty<KeyChord>());
+                Check(runtime.Navigator.Current.Id.Equals(ControlId.Structural("end")), "Background draw must not steal focus from actions.");
+                step(new[] { new KeyChord(UiKey.Tab) });
+                Check(runtime.Navigator.Current.Id.Equals(ControlId.Structural("hero")), "Hero inspection remains deliberate.");
+                cards.Clear(); step(Array.Empty<KeyChord>());
+                Check(runtime.Navigator.Current.Id.Equals(ControlId.Structural("hero")), "Hand changes must not steal deliberate hero focus.");
+            }
+            var oldInstance = new object(); var newInstance = new object();
+            var removed = ControlId.Referenced(new object(), "gone");
+            var state = new GraphState { CurKey = removed, KeyOrder = new[] { ControlId.Referenced(oldInstance, "old-key"), removed } };
+            state.StopMemory["combat.hand"] = removed;
+            var currentCards = new[] { ControlId.Referenced(newInstance, "old-key"), ControlId.Referenced(oldInstance, "new-key") };
+            CombatPresentation.KeepHandFocus(state, currentCards, ControlId.Structural("end"));
+            Check(state.NextSuggestedMove.Reference == oldInstance, "Reference survivor takes priority over a reused structural key.");
+            state.NextSuggestedMove = null;
+            CombatPresentation.KeepHandFocus(state, new[] { currentCards[0] }, ControlId.Structural("end"));
+            Check(state.NextSuggestedMove.Reference == newInstance, "Structural survivor is used if the old reference is absent.");
+            state.NextSuggestedMove = ControlId.Structural("hero");
+            CombatPresentation.KeepHandFocus(state, currentCards, ControlId.Structural("end"));
+            Check(state.NextSuggestedMove.Equals(ControlId.Structural("hero")), "An existing explicit move takes priority over hand recovery.");
+        }
+
+        private sealed class TestScreen : AccessibleScreen
+        {
+            private readonly string _id;
+            private readonly int _layer;
+            private readonly Func<bool> _active;
+            private readonly Action<GraphBuilder> _build;
+            public TestScreen(string id, int layer, Func<bool> active, Action<GraphBuilder> build)
+            { _id = id; _layer = layer; _active = active; _build = build; }
+            public override string Id => _id;
+            public override string ScreenName => _id;
+            public override int Layer => _layer;
+            public override bool IsActive() => _active();
+            public override void Build(GraphBuilder builder) => _build(builder);
+        }
+        private sealed class TestSpeech : ISpeechOutput
+        { public void Speak(string text, bool interrupt) { } public void Stop() { } }
         public static void TargetRules()
         {
             for (int mask = 0; mask < 32; mask++)

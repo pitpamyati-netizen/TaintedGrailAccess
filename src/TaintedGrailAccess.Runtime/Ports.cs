@@ -86,8 +86,8 @@ namespace TaintedGrailAccess.Runtime
         }
     }
 
-    public enum UiKey { None, Up, Right, Down, Left, Tab, Home, End, Enter, Escape, Backspace, Space, F1 }
-    [Flags] public enum Modifiers { None = 0, Shift = 1, Control = 2, Alt = 4 }
+    public enum UiKey { None, Up, Right, Down, Left, Tab, Home, End, Enter, Escape, Backspace, Space, F1, B, H, I, P, R, Y }
+    [Flags] public enum Modifiers { None = 0, Shift = 1, Control = 2, Alt = 4, Reserved = 8 }
 
     public struct KeyChord : IEquatable<KeyChord>
     {

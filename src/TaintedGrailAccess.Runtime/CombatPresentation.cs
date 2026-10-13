@@ -8,6 +8,30 @@ namespace TaintedGrailAccess.Runtime
     /// <summary>Fresh combat controls. All providers are evaluated by the current render only.</summary>
     public static class CombatPresentation
     {
+        /// <summary>After a card disappears, suggest a survivor in the hand before another section.</summary>
+        public static void KeepHandFocus(GraphState state, IReadOnlyList<ControlId> cards, ControlId emptyTarget)
+        {
+            ControlId remembered;
+            if (state.NextSuggestedMove != null || state.CurKey == null ||
+                !state.StopMemory.TryGetValue("combat.hand", out remembered) ||
+                !ControlId.SameIdentity(remembered, state.CurKey)) return;
+            if (ResolveCard(cards, state.CurKey) != null) return;
+            int index = state.KeyOrder.ToList().FindIndex(id => ControlId.SameIdentity(id, state.CurKey));
+            for (int i = index - 1; i >= 0; i--)
+            {
+                var survivor = ResolveCard(cards, state.KeyOrder[i]);
+                if (survivor != null) { state.NextSuggestedMove = survivor; return; }
+            }
+            state.NextSuggestedMove = cards.FirstOrDefault() ?? emptyTarget;
+        }
+
+        private static ControlId ResolveCard(IReadOnlyList<ControlId> cards, ControlId previous)
+        {
+            // Reference identity precedes the structural key, just as in KeyGraph.
+            return (previous.Reference == null ? null : cards.FirstOrDefault(id => ReferenceEquals(id.Reference, previous.Reference)))
+                ?? cards.FirstOrDefault(id => id.Equals(previous));
+        }
+
         /// <summary>Adds a distinct instance with passive inspection and a separately guarded action.</summary>
         public static void Add(GraphBuilder builder, object instance, string instanceKey, Func<string> label,
             Func<string> value, Func<string> unavailable, Func<string> selected, Action activate, Action tooltip,

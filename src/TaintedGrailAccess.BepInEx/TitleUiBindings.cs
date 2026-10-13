@@ -378,6 +378,7 @@ namespace TaintedGrailAccess.BepInExHost
             public override bool OnBack() => _owner.Back(_kind);
             public override bool OnContextualInput(KeyChord chord)
             {
+                if (_owner.CombatInfoInput(_kind, chord)) return true;
                 if (chord.Key != UiKey.F1 || chord.Modifiers != Modifiers.Control || chord.IsRepeat) return false;
                 _owner.HelpOpen = true;
                 return true;

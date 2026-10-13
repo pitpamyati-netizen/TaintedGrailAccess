@@ -9,7 +9,7 @@
   "production_target": "netstandard2.0",
   "test_runtime": "8.0.20",
   "game_tested": true,
-  "game_test_scope": "Historical M1/M2 accepted; initial 0.3.0 combat log shows live sections, cards, targets, turn completion, round progression and pile inspection; M3 full gate remains pending",
+  "game_test_scope": "M1/M2 accepted; user completed first fight with NVDA on initial 0.3.0. New info shortcuts and hand focus in installed 0.3.1 are portable-tested and compiled, not yet live-replayed; full M3 gate pending",
   "native_speech_tested": true,
   "native_speech_scope": "NVDA heard by blind user; other backends and full gameplay not accepted",
   "historical_game_validation": {
@@ -29,7 +29,7 @@
     "unity_version": "2020.3.23f1",
     "backend": "Mono",
     "loader": "BepInEx 5.4.23.5",
-    "plugin": "0.3.0",
+    "plugin": "0.3.1",
     "architecture": "x64",
     "build_id": "59087960036481007",
     "application_version": "1.61",
@@ -59,7 +59,8 @@
       "initial-m3-live-combat-sections-stats-intents-and-resources",
       "initial-m3-card-applyclick-marktarget-and-blocking-effect",
       "initial-m3-original-endturn-and-next-round",
-      "initial-m3-original-pile-inspection-and-close"
+      "initial-m3-original-pile-inspection-and-close",
+      "initial-m3-result-screen-and-return-to-tutorial"
     ],
     "portable_tested": true,
     "full_path_accepted": true,
@@ -99,7 +100,9 @@
       "visible-result-and-original-reward-buttons",
       "class-hint-modal-original-close-without-image-transcription",
       "original-callerless-targeting-quickcast-within-own-scope",
-      "visible-reroll-price-and-wealth"
+      "visible-reroll-price-and-wealth",
+      "combat-eight-passive-info-shortcuts",
+      "combat-within-hand-focus-after-first-last-card-removal-and-empty-hand"
     ],
     "compiled_with_game": true,
     "blind_user_accepted": [
@@ -112,7 +115,8 @@
       "native-text-no-graph-navigation-and-escape",
       "settings-audio-slider",
       "native-text-typing-deletion-selection-read-finish",
-      "independent-new-hero-tutorial-dialogue-class-to-first-combat-path"
+      "independent-new-hero-tutorial-dialogue-class-to-first-combat-path",
+      "initial-m3-first-combat-completed-with-nvda-with-two-reported-ux-issues"
     ],
     "game_actions_enabled": true,
     "m1_accepted": true,
@@ -124,24 +128,26 @@
       "m3-victory-defeat-rewards",
       "m3-repeat-cancel-alt-tab",
       "retained-card-native-endturn-live-reproduction",
-      "final-m3-guard-build-deployment-and-replay",
-      "final-quickcast-on-off-single-multiple-target-and-repeat-replay"
+      "final-quickcast-on-off-single-multiple-target-and-repeat-replay",
+      "0.3.1-passive-info-live-nvda-hold-layout-and-modifier-check",
+      "0.3.1-hand-focus-after-play-empty-hand-and-cancel-live-replay"
     ],
     "limitations": [
       "saved-consent-not-reset-and-TOS-not-repeated-in-game",
       "resolution-change-and-every-settings-list-variant-not-individually-live-tested",
       "final-formatting-cleanup-portable-and-compiled-not-separately-NVDA-retested",
       "gamepad-other-builds-modes-and-other-speech-backends-not-accepted",
-      "m3-initial-live-log-is-not-blind-user-acceptance",
       "class-hint-image-is-not-transcribed",
       "retained-card-native-endturn-static-early-return-risk",
-      "exploration-full-run-M4-to-M6-not-implemented-or-accepted"
+      "exploration-full-run-M4-to-M6-not-implemented-or-accepted",
+      "initial-first-combat-user-acceptance-does-not-cover-0.3.1-corrections-or-full-M3"
     ],
     "full_path_scope": "M2 first path from title/new game through tutorial to first combat entry only",
     "full_gameplay_accepted": false,
     "m2_accepted": true,
     "m3_accepted": false,
-    "m3_class_variants_accepted": false
+    "m3_class_variants_accepted": false,
+    "m3_first_combat_accepted": true
   },
   "results": [
     {
@@ -153,7 +159,7 @@
     {
       "failed": 0,
       "project": "Runtime",
-      "passed": 73,
+      "passed": 77,
       "phase": "run"
     },
     {
@@ -193,13 +199,20 @@
       "tested": true,
       "backup_verified": true,
       "scope": "Initial reversible 0.3.0 installation; combat log only; final guards and class-hint handling require another deployment/replay"
+    },
+    {
+      "project": "Deployment 0.3.1",
+      "phase": "installed-hash-verified",
+      "backup_verified": true,
+      "package_files_verified": 6,
+      "live_replayed": false
     }
   ],
   "m3_build_evidence": {
     "initial_installed_host_sha256": "53e85330c11ebf5919cc2c0ec7f32abeeac847803ccff8312c9d9f63e2f53f40",
-    "version": "0.3.0",
-    "scope": "Live combat log belongs to the initial host; final guard/quickcast candidate is compiled and metadata-checked, awaiting game exit and deployment",
-    "final_candidate_installed": false,
-    "final_candidate_host_sha256": "4b88ef557e2df5ac33fb421db4acf8b1d9d75fc959a334d4bbb283c8a6a1f19d"
+    "version": "0.3.1",
+    "scope": "Initial 0.3.0 first fight completed by user with NVDA. Installed 0.3.1 info/focus/guard/quickcast candidate is portable-tested and metadata-checked; live replay pending",
+    "final_candidate_installed": true,
+    "final_candidate_host_sha256": "20a02aa2617c962c794e9a193dfdd080fb8dbac3a6aeffd3037dcb726cfde8f0"
   }
 }

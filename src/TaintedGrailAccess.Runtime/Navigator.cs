@@ -126,9 +126,6 @@ namespace TaintedGrailAccess.Runtime
         {
             if (_session == null || _session.Screen.CapturesRawInput) return false;
             if (RealTextFieldActive) { ClearSearch(); return false; }
-            // The host owns key translation. Alt/OS/screen-reader chords are never
-            // silently reinterpreted as unmodified graph commands.
-            if (chord.Alt) return false;
             _handlingClaimed = false;
             try { return HandleCore(chord); }
             catch (Exception error)
@@ -156,6 +153,9 @@ namespace TaintedGrailAccess.Runtime
         {
             try { if (_session.Screen.OnContextualInput(chord)) return true; }
             catch { _handlingClaimed = true; throw; }
+            // An explicitly assigned contextual chord may use Alt. Other Alt/OS
+            // chords must never be reinterpreted as ordinary graph commands.
+            if (chord.Alt || (chord.Modifiers & Modifiers.Reserved) != 0) return false;
             if (chord.Key == UiKey.Tab && !chord.Control)
             {
                 _handlingClaimed = true;

@@ -75,6 +75,7 @@ namespace TaintedGrailAccess.BepInExHost
                 new[] { "cardSpecUi", "Awaken.TG.Main.Heroes.Fights.Deck.CardSpecPages.VCardSpecPageUI" },
                 new[] { "combatKey", "Awaken.TG.MVC.UI.Events.UIKeyDownAction" },
                 new[] { "statusSource", "Awaken.TG.Main.Fights.UI.IStatusSource" } }) AddType(assembly, pair[0], pair[1]);
+            AddType(assembly, "blockView", "Awaken.TG.Main.Fights.Modifiers.Views.VBlock");
             _availableSkill = _types["availability"].GetField("Available").GetValue(null);
             _hiddenSkill = _types["availability"].GetField("Hidden").GetValue(null);
             _cancelEvent = Activator.CreateInstance(assembly.GetType("Awaken.TG.MVC.UI.Events.UICancelAction", true));
@@ -209,17 +210,18 @@ namespace TaintedGrailAccess.BepInExHost
             return Visible(text) ? text.text : null;
         }
         private static string JoinText(IEnumerable<string> parts) => string.Join(", ", parts.Where(p => !string.IsNullOrWhiteSpace(p)));
-        private string TooltipText(Component view)
+        private string TooltipText(Component view) => TooltipText(view, true);
+        private string TooltipText(Component view, bool includeDetails)
         {
             if (!Visible(view) || !_types["withTooltip"].IsInstanceOfType(view)) return null;
-            return ConstructorText(ReadProp("withTooltip", "TooltipConstructor", view));
+            return ConstructorText(ReadProp("withTooltip", "TooltipConstructor", view), includeDetails: includeDetails);
         }
-        private string ConstructorText(object constructor, int depth = 0)
+        private string ConstructorText(object constructor, int depth = 0, bool includeDetails = true)
         {
             if (constructor == null || depth > 2) return null;
             // The tooltip's non-string values are templates/icons, never hidden card data.
             return JoinText(((IEnumerable)ReadProp("tooltip", "Objects", constructor)).OfType<string>()
-                .Concat(new[] { ConstructorText(ReadProp("tooltip", "SubTooltip", constructor), depth + 1) }));
+                .Concat(new[] { includeDetails ? ConstructorText(ReadProp("tooltip", "SubTooltip", constructor), depth + 1) : null }));
         }
         private Action ReadDetail(Func<string> text) => () => { var value = text(); _speech?.Speak(string.IsNullOrWhiteSpace(value) ? _text.Get("action.noTooltip") : value, true); };
         private bool SkillShown(object skill) => skill != null && !ReferenceEquals(ReadProp("skill", "Availability", skill), _hiddenSkill);
@@ -239,6 +241,92 @@ namespace TaintedGrailAccess.BepInExHost
                 if ((string)ReadProp("statType", "Abbreviation", stat) == name) return ReadProp("statType", "DisplayName", stat).ToString();
             }
             return null;
+        }
+
+        private bool CombatInfoInput(string kind, KeyChord chord)
+        {
+            if (kind != "combat" && kind != "target" && kind != "choose" && kind != "retain" && kind != "cardSpec" && kind != "runeDeck") return false;
+            if (_actionScreen != kind || HelpOpen || Capturing() || !CombatActive("combat")) return false;
+            return CombatReadoutKeys.Handle(chord, CombatInfoText, _speech, _text.Get("combat.info.unavailable"));
+        }
+
+        private IEnumerable<Component> FighterStatRoots(object fighter)
+        {
+            if (!ModelLive(fighter)) return Enumerable.Empty<Component>();
+            return ((IEnumerable)ReadProp("model", "Views", fighter)).Cast<Component>().Where(v => Visible(v) &&
+                (_types["npcUi"].IsInstanceOfType(v) || _types["fighterHud"].IsInstanceOfType(v)));
+        }
+
+        private IEnumerable<Component> FighterEffectViews(object character)
+        {
+            return CombatViews().Where(v =>
+            {
+                if (!_types["withTooltip"].IsInstanceOfType(v)) return false;
+                var model = ReadProp("view", "GenericTarget", v);
+                return _types["statusSource"].IsInstanceOfType(model) && ReferenceEquals(ReadProp("statusSource", "Character", model), character);
+            });
+        }
+
+        private object[] CurrentHand() => All("combatCard").Where(c => ReferenceEquals(ReadProp("combatCard", "Board", c), Find("combat")) &&
+            !(bool)ReadProp("combatCard", "IsDissolving", c) && ViewOf(c, _types["combatCardView"]) != null && SkillShown(ReadProp("combatCard", "Skill", c))).ToArray();
+
+        private string CombatInfoText(CombatReadout readout)
+        {
+            var board = Find("combat");
+            var hero = ReadProp("combat", "Hero", board);
+            var fighter = ReadProp("character", "Fighter", hero);
+            switch (readout)
+            {
+                case CombatReadout.Health:
+                    var health = _combatSpriteFields.First(f => f.Name == "Health").GetValue(null);
+                    return JoinText(FighterStatRoots(fighter).SelectMany(root => root.GetComponentsInChildren(_types["statDisplay"], false).Cast<Component>())
+                        .Where(Visible).Where(stat => ReferenceEquals(ReadProp("richReference", "Enum", ReadField("statDisplay", "statType", stat)), health))
+                        .Select(stat => ReadProp("statType", "DisplayName", health) + ": " + ShownText("statDisplay", "text", stat)));
+                case CombatReadout.Energy:
+                    var energy = ShownText("handView", "combatPointsText", View("hand"));
+                    return string.IsNullOrWhiteSpace(energy) ? null : _text.Get("combat.energy") + ": " + energy;
+                case CombatReadout.Barrier:
+                    var protection = FighterStatRoots(fighter).SelectMany(root => root.GetComponentsInChildren(_types["barrierDisplay"], false).Cast<Component>())
+                        .Where(Visible).Select(v => _text.Get("combat.barrier") + ": " + ShownText("barrierDisplay", "text", v))
+                        .Concat(FighterEffectViews(hero).Where(v => _types["blockView"].IsInstanceOfType(v)).Select(TooltipText));
+                    var barrier = JoinText(protection);
+                    return string.IsNullOrWhiteSpace(barrier) ? _text.Get("combat.info.noProtectionShown") : barrier;
+                case CombatReadout.ClassResource:
+                    return JoinText(All("ultimate").Where(u => ReferenceEquals(ReadProp("ultimate", "Board", u), board)).Select(u =>
+                    {
+                        var view = ViewOf(u, _types["ultimateView"]);
+                        var skill = ReadProp("ultimate", "Skill", u);
+                        return view == null || !SkillShown(skill) ? null : JoinText(new[] { (string)ReadProp("skill", "DisplayName", skill),
+                            ShownText("ultimateView", "charges", view), ShownText("ultimateView", "specialText", view) });
+                    }));
+                case CombatReadout.Effects:
+                    var effects = JoinText(FighterEffectViews(hero).Select(TooltipText));
+                    return string.IsNullOrWhiteSpace(effects) ? _text.Get("combat.info.noEffectsShown") : effects;
+                case CombatReadout.Intents:
+                case CombatReadout.ShortIntents:
+                    var enemies = All("npc").Where(n => ReferenceEquals(ReadProp("npc", "Board", n), board) && (bool)ReadProp("npc", "IsEnemy", n) && FighterShown(n)).ToArray();
+                    return enemies.Length == 0 ? _text.Get("combat.info.noEnemiesShown") : JoinText(enemies.Select(n =>
+                    {
+                        var intentions = JoinText(All("intent").Where(i => ReferenceEquals(ReadProp("intent", "NpcFighter", i), n)).Select(i =>
+                        {
+                            var view = ViewOf(i, _types["intentView"]);
+                            var countdown = ShownText("intentView", "cooldown", view);
+                            return view == null ? null : JoinText(new[] { ShownText("intentView", "textComponent", view),
+                                string.IsNullOrWhiteSpace(countdown) ? null : _text.Get("combat.info.intentCountdown", countdown),
+                                TooltipText(view, readout == CombatReadout.Intents) });
+                        }));
+                        return (string)ReadProp("npc", "Name", n) + ": " + (string.IsNullOrWhiteSpace(intentions) ? _text.Get("combat.info.noIntentShown") : intentions);
+                    }));
+                case CombatReadout.Hand:
+                    var cards = CurrentHand();
+                    return _text.Get("combat.info.handCount", cards.Length) + (cards.Length == 0 ? "" : ": " + JoinText(cards.Select(c =>
+                    {
+                        var view = ViewOf(c, _types["combatCardView"]);
+                        return JoinText(new[] { ShownText("combatCardView", "skillTitle", view), ShownText("combatCardView", "energyCostText", view),
+                            ShownText("combatCardView", "runeChargesCostText", view), SideText("combatCardView", view) });
+                    })));
+                default: return null;
+            }
         }
 
         private bool BuildCombat(string kind, GraphBuilder builder)
@@ -305,8 +393,9 @@ namespace TaintedGrailAccess.BepInExHost
 
         private void BuildCombatHand(string kind, GraphBuilder builder)
         {
-            var cards = All("combatCard").Where(c => ReferenceEquals(ReadProp("combatCard", "Board", c), Find("combat")) &&
-                !(bool)ReadProp("combatCard", "IsDissolving", c) && ViewOf(c, _types["combatCardView"]) != null && SkillShown(ReadProp("combatCard", "Skill", c))).ToArray();
+            var cards = CurrentHand();
+            if (kind == "combat") CombatPresentation.KeepHandFocus(builder.State,
+                cards.Select(c => ControlId.Referenced(c, InstanceKey("combat.card", c))).ToArray(), ControlId.Structural("combat.endTurn"));
             foreach (var card in cards)
             {
                 var key = InstanceKey("combat.card", card);

@@ -14,6 +14,10 @@ namespace TaintedGrailAccess.Runtime.Tests
         {
             ("combat_inspection_never_plays_and_actions_are_fresh", CombatTests.InspectionAndFreshAction),
             ("combat_duplicate_instance_reorder_deletion_and_empty_hand", CombatTests.DuplicateIdentityAndRemoval),
+            ("combat_hand_focus_survives_targeting_first_last_card_and_empty_hand", CombatTests.HandFocusAcrossSectionsAndTargeting),
+            ("combat_info_exact_chords_modifier_matrix", CombatReadoutTests.ExactChordMatrix),
+            ("combat_info_passive_fresh_hold_and_native_ownership", CombatReadoutTests.PassiveFreshAndHeld),
+            ("combat_info_alt_unknown_raw_and_text_capture_boundaries", CombatReadoutTests.AltAndCaptureBoundaries),
             ("combat_exact_optional_display_only_and_stale_selection", CombatTests.SelectionRules),
             ("combat_target_ownership_visibility_death_and_legality_matrix", CombatTests.TargetRules),
             ("combat_log_equal_events_append_once_and_reset", CombatTests.LogNewLinesOnce),
