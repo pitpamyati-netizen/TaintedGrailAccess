@@ -76,6 +76,7 @@ namespace TaintedGrailAccess.BepInExHost
                 new[] { "combatKey", "Awaken.TG.MVC.UI.Events.UIKeyDownAction" },
                 new[] { "statusSource", "Awaken.TG.Main.Fights.UI.IStatusSource" } }) AddType(assembly, pair[0], pair[1]);
             AddType(assembly, "blockView", "Awaken.TG.Main.Fights.Modifiers.Views.VBlock");
+            AddType(assembly, "tierView", "Awaken.TG.Main.Fights.NpcFighters.Tiers.VFighterTier");
             _availableSkill = _types["availability"].GetField("Available").GetValue(null);
             _hiddenSkill = _types["availability"].GetField("Hidden").GetValue(null);
             _cancelEvent = Activator.CreateInstance(assembly.GetType("Awaken.TG.MVC.UI.Events.UICancelAction", true));
@@ -109,6 +110,8 @@ namespace TaintedGrailAccess.BepInExHost
             Field("rangeDisplay", "text", typeof(TextMeshProUGUI)); Field("rangeDisplay", "minStat");
             Field("button", "OnPress", typeof(Action));
             Prop("ultimateView", "RuneSubTooltip");
+            Field("ultimateView", "_runeThresholds", typeof(Dictionary<GameObject, int>));
+            Field("tierView", "tierNumber", typeof(TextMeshProUGUI));
             Prop("mouseDown", "Button", typeof(int));
             foreach (var name in new[] { "previousArrow", "nextArrow" }) Field("cardSpecUi", name, _types["button"]);
             Field("summaryView", "continueButton", _types["button"]); Field("lootView", "takeAllButton", _types["button"]);
@@ -123,6 +126,7 @@ namespace TaintedGrailAccess.BepInExHost
             Field("combatCardView", "button", _types["button"]);
             foreach (var name in new[] { "skillTitle", "skillOnPlayDesc", "cardTypeText", "skillCostText", "runeChargesCostText", "flipStatesText" }) Field("preview", name, typeof(TextMeshProUGUI));
             Field("preview", "_knownDescription", typeof(bool)); Field("preview", "_skill", _types["skill"]);
+            Field("preview", "_normalBackground", typeof(bool)); Prop("preview", "AllowCardSpec", typeof(bool));
             foreach (var name in new[] { "combatPointsText", "deckCards", "discardedCards", "graveyardCards", "exileCars" }) Field("handView", name, typeof(TextMeshProUGUI));
             foreach (var name in new[] { "endTurnButton", "showDeckButton", "showDiscardButton", "showGraveButton", "showExileButton" }) Field("handView", name, _types["button"]);
             Field("ultimateView", "charges", typeof(TextMeshProUGUI)); Field("ultimateView", "specialText", typeof(TextMeshProUGUI)); Field("ultimateView", "button", _types["button"]);
@@ -338,6 +342,15 @@ namespace TaintedGrailAccess.BepInExHost
             if (kind == "combatTutorial")
             {
                 builder.Add(ControlId.Structural("combat.tutorial.help"), new NodeVtable(new NodeAnnouncement(() => _text.Get("combat.tutorial.help"))));
+                foreach (var ultimate in All("ultimate").Where(u => ReferenceEquals(ReadProp("ultimate", "Board", u), Find("combat"))))
+                {
+                    var model = ultimate;
+                    if (ViewOf(model, _types["ultimateView"]) == null) continue;
+                    builder.Add(ControlId.Referenced(model, InstanceKey("combat.tutorial.description", model)),
+                        new NodeVtable(new NodeAnnouncement(() => _text.Get("combat.classDetails")))
+                        { OnTooltip = ReadDetail(() => UltimateDetail(ViewOf(model, _types["ultimateView"]))),
+                          OnActivate = ReadDetail(() => UltimateDetail(ViewOf(model, _types["ultimateView"]))) });
+                }
                 AddButton(builder, kind, (Component)ReadField("combatView", "closeDruidTutorialButton", View("combat")), ControlId.Structural("combat.tutorial.close"), "combatTutorial.close");
                 return true;
             }
@@ -346,7 +359,12 @@ namespace TaintedGrailAccess.BepInExHost
             if (kind == "target") { BuildCombatTargets(builder); return true; }
             if (kind == "cardSpec" || kind == "runeDeck") { BuildCombatDetails(kind, builder); return true; }
             if (kind == "result") { BuildCombatResult(builder); return true; }
-            if (kind == "retain") { BuildCombatHand(kind, builder); AddEndTurn(builder, kind); return true; }
+            if (kind == "retain")
+            {
+                Zone(builder, "hand"); BuildCombatHand(kind, builder); builder.PopContext();
+                Zone(builder, "actions"); AddEndTurn(builder, kind); builder.PopContext();
+                return true;
+            }
             Zone(builder, "status");
             builder.Add(ControlId.Structural("combat.turn"), new NodeVtable(new NodeAnnouncement(TurnText)));
             var board = Find("combat");
@@ -411,11 +429,22 @@ namespace TaintedGrailAccess.BepInExHost
                     () => { var current = view(); var skill = ReadProp("combatCard", "Skill", card);
                         if (CombatCanAct(kind) && ModelLive(card) && Actionable(current) && CardHandlerReady(current) && !(bool)ReadProp("combatCard", "IsDissolving", card) &&
                             (kind == "retain" || SkillAvailable(skill))) Invoke(key, () => _combatMethods["combatCardView.ApplyClick"].Invoke(current, null)); },
-                    ReadDetail(() => TooltipText(view()) ?? ShownText("combatCardView", "skillOnPlayDesc", view())),
+                    ReadDetail(() => CombatPresentation.CardDetail(true, () => TooltipText(view()), () => ShownText("combatCardView", "skillOnPlayDesc", view()))),
                     () => OpenCardSpec(kind, view(), "combatCardView"), kind == "retain" ? selection : null);
             }
             if (cards.Length == 0) EmptyNode(builder, "hand");
-            if (kind == "retain") builder.Add(ControlId.Structural("combat.retain.help"), new NodeVtable(new NodeAnnouncement(() => _text.Get("combat.retain.help"))));
+            if (kind == "retain")
+            {
+                builder.Add(ControlId.Structural("combat.retain.help"), new NodeVtable(new NodeAnnouncement(() => _text.Get("combat.retain.help"))));
+                builder.Add(ControlId.Structural("combat.retain.selection"), new NodeVtable(new NodeAnnouncement(RetainedCardText, "label", true)));
+            }
+        }
+        private string RetainedCardText()
+        {
+            var selector = Find("retain"); if (selector == null) return null;
+            var selected = ReadProp("retain", "SelectedCard", selector);
+            var view = selected == null ? null : ViewOf(selected, _types["combatCardView"]);
+            return _text.Get(view == null ? "combat.retain.none" : "combat.retain.selected", view == null ? null : ShownText("combatCardView", "skillTitle", view));
         }
         private string SideText(string kind, Component view)
         { var side = ShownText(kind, "flipStatesText", view); return string.IsNullOrWhiteSpace(side) ? null : _text.Get("combat.side", side); }
@@ -479,8 +508,14 @@ namespace TaintedGrailAccess.BepInExHost
                 var model = ReadProp("view", "GenericTarget", view);
                 if (!_types["statusSource"].IsInstanceOfType(model) || !ReferenceEquals(ReadProp("statusSource", "Character", model), character)) continue;
                 var current = view;
-                var detail = TooltipText(current); if (string.IsNullOrWhiteSpace(detail)) continue;
-                CombatPresentation.Add(builder, model, key + ".effect." + current.GetInstanceID(), () => TooltipText(current), null, null, null, null, ReadDetail(() => TooltipText(current)));
+                if (_types["tierView"].IsInstanceOfType(current))
+                    CombatPresentation.Add(builder, model, key + ".effect." + current.GetInstanceID(), () => _text.Get("combat.summonTier"),
+                        () => ShownText("tierView", "tierNumber", current), null, null, null, ReadDetail(() => TooltipText(current)));
+                else
+                {
+                    var detail = TooltipText(current); if (string.IsNullOrWhiteSpace(detail)) continue;
+                    CombatPresentation.Add(builder, model, key + ".effect." + current.GetInstanceID(), () => TooltipText(current), null, null, null, null, ReadDetail(() => TooltipText(current)));
+                }
             }
             foreach (var intent in All("intent").Where(i => ReferenceEquals(ReadProp("intent", "NpcFighter", i), character)))
             {
@@ -496,14 +531,26 @@ namespace TaintedGrailAccess.BepInExHost
             var skill = ReadProp("ultimate", "Skill", ultimate); if (view() == null || !SkillShown(skill)) return;
             var key = InstanceKey("combat.ultimate", ultimate);
             CombatPresentation.Add(builder, ultimate, key, () => (string)ReadProp("skill", "DisplayName", ReadProp("ultimate", "Skill", ultimate)),
-                () => JoinText(new[] { ShownText("ultimateView", "charges", view()), ShownText("ultimateView", "specialText", view()) }),
+                () => JoinText(new[] { ShownText("ultimateView", "charges", view()), ShownText("ultimateView", "specialText", view()), UltimateThresholds(view()) }),
                 () => SkillReason(ReadProp("ultimate", "Skill", ultimate)), null,
                 () => { var current = view(); if (CombatCanAct("combat") && Actionable(current) && SkillAvailable(ReadProp("ultimate", "Skill", ultimate)))
                         Invoke(key, () => _combatMethods["ultimateView.ApplyClick"].Invoke(current, null)); },
-                ReadDetail(() => JoinText(new[] { TooltipText(view()), ConstructorText(ReadProp("ultimateView", "RuneSubTooltip", view())) })),
+                ReadDetail(() => UltimateDetail(view())),
                 () => { var current = view(); if (!CombatCanAct("combat") || !Actionable(current)) return;
                     var evt = Activator.CreateInstance(_types["mouseDown"]); _properties["mouseDown.Button"].SetValue(evt, 1);
                     Invoke("combat.ultimateDetails", () => _combatMethods["ultimateView.Handle"].Invoke(current, new[] { evt })); });
+        }
+        private string UltimateDetail(Component view)
+        {
+            if (!Visible(view)) return null;
+            return JoinText(new[] { TooltipText(view), ConstructorText(ReadProp("ultimateView", "RuneSubTooltip", view)), UltimateThresholds(view) });
+        }
+        private string UltimateThresholds(Component view)
+        {
+            if (!Visible(view)) return null;
+            var thresholds = (Dictionary<GameObject, int>)ReadField("ultimateView", "_runeThresholds", view);
+            var shown = thresholds.Where(pair => pair.Key != null && Visible(pair.Key.transform)).Select(pair => pair.Value).OrderBy(value => value).ToArray();
+            return shown.Length == 0 ? null : _text.Get("combat.ultimateThresholds", string.Join(", ", shown));
         }
         private void AddCombatItems(GraphBuilder builder)
         {
@@ -524,7 +571,16 @@ namespace TaintedGrailAccess.BepInExHost
             CombatPresentation.Add(builder, Find("hand"), "combat.endTurn", () => _text.Get(kind == "retain" ? "combat.retain.confirm" : "combat.endTurn"), null,
                 () => CanEndTurn(kind, button) ? null : _text.Get("combat.processing"), null,
                 () => { var current = View("hand"); if (CanEndTurn(kind, (Component)ReadField("handView", "endTurnButton", current)))
-                    { Invoke("combat.endTurn", () => _combatMethods["handView.EndTurn"].Invoke(current, null)); _combatTurn = TurnText(); } }, null, null, TurnText);
+                    {
+                        if (kind == "retain")
+                        {
+                            var hero = ReadProp("combat", "Hero", Find("combat"));
+                            var fighter = ReadProp("character", "Fighter", hero);
+                            _log.Write("combat.retain.confirm", "frame=" + Time.frameCount + "; executingTurn=" + ReadProp("fighter", "IsExecutingTurn", fighter) +
+                                "; selected=" + (ReadProp("retain", "SelectedCard", Find("retain")) != null));
+                        }
+                        Invoke("combat.endTurn", () => _combatMethods["handView.EndTurn"].Invoke(current, null)); _combatTurn = TurnText();
+                    } }, null, null, TurnText);
         }
         private bool CanEndTurn(string kind, Component button) => CombatCanAct(kind) && Actionable(button) && ((Selectable)button).IsInteractable() &&
             !CombatViews().Any(v => _types["fightBlocker"].IsInstanceOfType(v) || _types["modalBlocker"].IsInstanceOfType(v));
@@ -611,7 +667,7 @@ namespace TaintedGrailAccess.BepInExHost
                 CombatPresentation.Add(builder, option, InstanceKey("combat.choose.option", option), label,
                     () => preview == null ? null : PreviewValue(preview), () => display || ((Selectable)button).IsInteractable() ? null : _text.Get("state.disabled"), selected,
                     display ? null : (Action)(() => { if (CombatCanAct("choose") && ModelLive(option) && ReferenceEquals(ReadProp("combatChoice", "ParentModel", option), Find("choose"))) ActivateButton("choose", button, "combat.choose.option"); }),
-                    ReadDetail(() => preview != null ? TooltipText(preview) : ChoiceTooltip(content)),
+                    ReadDetail(() => preview != null ? PreviewDetail(preview) : ChoiceTooltip(content)),
                     () => { if (preview != null) OpenCardSpec("choose", preview, "preview"); }, () => display ? null : JoinText(new[] { selected() ?? _text.Get("state.unselected"), SelectionText() }));
             }
             builder.BeginStop("combat.choose.confirm");
@@ -638,6 +694,12 @@ namespace TaintedGrailAccess.BepInExHost
         }
         private string ChoiceTooltip(Transform content) => JoinText(content.GetComponentsInChildren<Component>(false).Where(v => _types["withTooltip"].IsInstanceOfType(v)).Select(TooltipText));
         private string PreviewValue(Component preview) => JoinText(new[] { ShownText("preview", "cardTypeText", preview), ShownText("preview", "skillCostText", preview), ShownText("preview", "runeChargesCostText", preview), SideText("preview", preview) });
+        private string PreviewDetail(Component preview)
+        {
+            if (!Visible(preview)) return null;
+            return CombatPresentation.CardDetail((bool)ReadField("preview", "_knownDescription", preview),
+                () => TooltipText(preview), () => ShownText("preview", "skillOnPlayDesc", preview));
+        }
 
         private void BuildCombatDetails(string kind, GraphBuilder builder)
         {
@@ -649,7 +711,9 @@ namespace TaintedGrailAccess.BepInExHost
                 {
                     var current = preview;
                     CombatPresentation.Add(builder, current, "combat.preview." + current.GetInstanceID(), () => ShownText("preview", "skillTitle", current),
-                        () => PreviewValue(current), null, null, null, ReadDetail(() => TooltipText(current)));
+                        () => PreviewValue(current), kind == "runeDeck" ? (Func<string>)(() => _text.Get((bool)ReadField("preview", "_normalBackground", current) ? "combat.runeCard.available" : "combat.runeCard.used")) : null,
+                        null, null, ReadDetail(() => PreviewDetail(current)),
+                        kind == "runeDeck" ? (Action)(() => { if ((bool)ReadProp("preview", "AllowCardSpec", current)) OpenCardSpec(kind, current, "preview"); }) : null);
                 }
                 foreach (var text in root.GetComponentsInChildren<TMP_Text>(false).Where(t => Visible(t) && t.GetComponentInParent(_types["preview"]) == null))
                 { var current = text; builder.Add(ControlId.Referenced(current, "combat.detail.text." + current.GetInstanceID()), new NodeVtable(new NodeAnnouncement(() => current.text, "label", true))); }
@@ -679,7 +743,9 @@ namespace TaintedGrailAccess.BepInExHost
                     if (!_types[binding[0]].IsInstanceOfType(root)) continue;
                     var button = (Component)ReadField(binding[0], binding[1], root);
                     if (button == null || !seen.Add(button.GetInstanceID())) continue;
-                    AddButton(builder, "result", button, ControlId.Referenced(ReadProp("view", "GenericTarget", root), "combat.result." + binding[1]), "result." + binding[1]);
+                    var model = ReadProp("view", "GenericTarget", root);
+                    AddButton(builder, "result", button, ControlId.Referenced(model,
+                        CombatPresentation.ActionKey((string)ReadProp("model", "ID", model), binding[1])), "result." + binding[1]);
                 }
             }
             // XP's normal Submit accelerates its own animation; it does not grant another reward.
@@ -725,6 +791,8 @@ namespace TaintedGrailAccess.BepInExHost
         {
             if (!CombatCanAct(kind)) return false;
             if (kind == "combatTutorial") { ActivateButton(kind, (Component)ReadField("combatView", "closeDruidTutorialButton", View("combat")), "combatTutorial.close"); return true; }
+            // The original selector prevents Cancel. Do not leak Escape to the underlying menu.
+            if (kind == "retain") return true;
             if (kind == "target" || kind == "runeDeck")
             { Invoke("combat.cancel", () => _combatMethods[kind + "View.Handle"].Invoke(View(kind), new[] { _cancelEvent })); return true; }
             if (kind == "choose")

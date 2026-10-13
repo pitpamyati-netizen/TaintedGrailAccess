@@ -2,16 +2,49 @@
   "schema_version": 3,
   "date": "2026-10-13",
   "success": true,
+  "success_scope": "Current automated checks, compilation and reversible deployment only; full M3 game/NVDA acceptance remains false",
   "platform": "Windows x64",
   "sdk": "10.0.301",
-  "method": "scripts/test.ps1 historical full checks; Runtime.Tests focused 0.3.2 historical; 0.3.3 scripts/build.ps1, scripts/deploy.ps1, focused BindingChecks currency regression and user-led NVDA post-combat scenario",
+  "method": "0.3.4 scripts/test.ps1, scripts/build.ps1, BindingChecks and scripts/deploy.ps1; earlier game/NVDA results retained as explicitly historical; no live acceptance of new 0.3.4 paths",
   "production_reference_check": true,
   "production_target": "netstandard2.0",
   "test_runtime": "8.0.20",
   "game_tested": true,
-  "game_test_scope": "First combat completed on initial 0.3.0; selected readouts and hand focus accepted on 0.3.1; menu and held-Escape target cancellation followed by Enter-target-Enter accepted on 0.3.2. On installed 0.3.3 user confirmed post-combat resource names and Continue to reading and obtaining the available reward with NVDA. Reported class label: Егерь; reward type unspecified. Full M3 gate open",
+  "game_test_scope": "Historical only: first combat completed on initial 0.3.0; selected readouts and hand focus accepted on 0.3.1; menu and held-Escape target cancellation followed by Enter-target-Enter accepted on 0.3.2. On installed 0.3.3 user confirmed post-combat resource names and Continue to reading and obtaining the available reward with NVDA. Reported class label: Егерь; reward type unspecified. No live test of new 0.3.4 paths. Full M3 gate open",
   "native_speech_tested": true,
-  "native_speech_scope": "NVDA heard by blind user; other backends and full gameplay not accepted",
+  "native_speech_scope": "Historical versions through 0.3.3: NVDA heard by blind user; 0.3.4 new paths, other backends and full gameplay not accepted",
+  "current_validation": {
+    "version": "0.3.4",
+    "implemented": true,
+    "portable_tested": true,
+    "compiled_with_game": true,
+    "installed_hash_verified": true,
+    "installed_assembly_version": "0.3.4.0",
+    "package_files_verified": 6,
+    "backup_verified": true,
+    "backup_plugin_version": "0.3.3",
+    "backup_assembly_version": "0.3.2.0",
+    "backup_version_note": "Previous plugin declared 0.3.3 but its project metadata still declared 0.3.2; both versions agree in 0.3.4",
+    "backup_host_sha256": "1b9619623baae0cfae88ebaef5713ac4658dbcd9251572538f9939c3833c4fb5",
+    "host_sha256": "d81887f9698721695bb5539ab8a72cd8a7a762cf56c67bd6b007f5c88f98f2c8",
+    "in_game_tested": false,
+    "blind_user_accepted": false,
+    "m3_gate_accepted": false,
+    "scope": "Visible card detail fallback and concealment, class thresholds and deck availability, original side inspection, summon tier number, class-hint text, retained-card selection sections and required Cancel guard, distinct result model/action identities; nine class metadata contracts",
+    "regression_before_fix": {
+      "method": "Temporarily restored previous detail fallback and action-key policies, then restored corrected source; independent Runtime test only",
+      "passed": 82,
+      "failed": 2,
+      "cases": ["CardDetailVisibility", "RewardActionIdentity"]
+    },
+    "retained_card_probe": {
+      "result": "not-encountered",
+      "user_report": "Такое окно пока не появилось",
+      "next_round_confirmed": false,
+      "static_endturn_early_return_risk": true,
+      "live_stall_reproduced": false
+    }
+  },
   "historical_game_validation": {
     "plugin": "0.1.1",
     "game_tested": true,
@@ -29,7 +62,7 @@
     "unity_version": "2020.3.23f1",
     "backend": "Mono",
     "loader": "BepInEx 5.4.23.5",
-    "plugin": "0.3.3",
+    "plugin": "0.3.4",
     "architecture": "x64",
     "build_id": "59087960036481007",
     "application_version": "1.61",
@@ -110,7 +143,13 @@
       "combat-eight-passive-info-shortcuts",
       "combat-within-hand-focus-after-first-last-card-removal-and-empty-hand",
       "0.3.2-back-and-search-cancellation-once-per-physical-escape-press",
-      "0.3.3-all-eight-visible-result-currency-sprites-use-current-game-displaynames"
+      "0.3.3-all-eight-visible-result-currency-sprites-use-current-game-displaynames",
+      "0.3.4-visible-card-detail-fallback-without-concealed-tooltip-query",
+      "0.3.4-visible-ultimate-thresholds-and-class-hint-text",
+      "0.3.4-rune-deck-availability-and-original-allowed-side-inspection",
+      "0.3.4-visible-summon-tier-number",
+      "0.3.4-retained-card-live-selection-separate-confirmation-and-required-cancel-guard",
+      "0.3.4-repeated-result-actions-keyed-by-model-and-role"
     ],
     "compiled_with_game": true,
     "blind_user_accepted": [
@@ -145,7 +184,8 @@
       "retained-card-native-endturn-live-reproduction",
       "final-quickcast-on-off-single-multiple-target-and-repeat-replay",
       "info-readouts-hold-layout-reserved-modifier-live-check",
-      "0.3.2-search-clear-hold-live-check"
+      "0.3.2-search-clear-hold-live-check",
+      "0.3.4-new-class-deck-threshold-tier-hint-and-result-paths-with-nvda"
     ],
     "limitations": [
       "saved-consent-not-reset-and-TOS-not-repeated-in-game",
@@ -158,7 +198,9 @@
       "selected-readouts-hand-menu-target-cancel-one-post-combat-reward-path-enter-hold-and-alt-tab-do-not-cover-search-hold-target-disappearance-or-full-M3",
       "0.3.3-post-combat-reward-accepted-for-reported-class-egery-only-reward-type-unspecified",
       "user-reported-only-class-egery-available-other-class-mechanics-await-normal-unlock-and-live-NVDA-check",
-      "0.3.3-enter-confirm-hold-single-play-accepted-focus-return-not-explicitly-reported"
+      "0.3.3-enter-confirm-hold-single-play-accepted-focus-return-not-explicitly-reported",
+      "0.3.4-installed-and-compiled-new-paths-not-live-tested",
+      "0.3.4-retained-card-window-not-yet-encountered-next-round-unconfirmed"
     ],
     "full_path_scope": "M2 first path from title/new game through tutorial to first combat entry only",
     "full_gameplay_accepted": false,
@@ -197,7 +239,7 @@
     {
       "failed": 0,
       "project": "Runtime",
-      "passed": 81,
+      "passed": 84,
       "phase": "run"
     },
     {
@@ -214,6 +256,7 @@
     },
     {
       "project": "BepInEx host",
+      "version": "0.3.4",
       "warnings": 0,
       "phase": "compile-with-game",
       "exit_code": 0
@@ -226,7 +269,7 @@
       "scope": "Reversible deployment, hash comparison and user-led first-path acceptance; final text-formatting cleanup not separately live-replayed"
     },
     {
-      "project": "BindingChecks",
+      "project": "BindingChecks 0.3.3 historical",
       "phase": "metadata-with-game",
       "exit_code": 0,
       "version": "0.3.3",
@@ -235,6 +278,22 @@
         "exit_code": 1,
         "missing_currency_fields": ["RunestoneDust", "Blood", "Tallow", "CardShreds", "GoldenTokens", "JournalPages"]
       }
+    },
+    {
+      "project": "BindingChecks",
+      "phase": "metadata-with-game",
+      "exit_code": 0,
+      "version": "0.3.4",
+      "class_identifiers_checked": 9,
+      "scope": "Exact M1/M2/M3 metadata, visible ultimate thresholds, tier number, rune-deck availability and side-inspection flag, nine class fields and eight result currencies; no class initializers, Unity objects, patches or game actions"
+    },
+    {
+      "project": "Deployment 0.3.4",
+      "phase": "installed-hash-verified",
+      "backup_verified": true,
+      "package_files_verified": 6,
+      "live_replayed": false,
+      "live_scope": "New paths not live tested; retained-card window not yet encountered by user"
     },
     {
       "project": "Deployment 0.3.0 initial",
@@ -268,11 +327,17 @@
       "live_scope": "User confirmed post-combat resource names replacing B/CS/JP/RD/Ta/GT and Continue to reading and obtaining the available reward with keyboard and NVDA. User also confirmed single card play on held Enter and held Enter across Alt+Tab and return: no repeat until release, then a new press works. Reported class label: Егерь; reward type unspecified; other classes, reward variants and defeat remain pending"
     }
   ],
-  "m3_build_evidence": {
+  "historical_0_3_3_build_evidence": {
     "initial_installed_host_sha256": "53e85330c11ebf5919cc2c0ec7f32abeeac847803ccff8312c9d9f63e2f53f40",
     "version": "0.3.3",
     "scope": "0.3.3 currency-name fix compiled with game and verified by a failing-before/passing-after metadata regression covering all eight resources. Installed files and 0.3.2 backup hash verified. User accepted resource names and one available post-combat reward path with NVDA for reported class Егерь. Historical portable checks unchanged; full M3 remains pending",
     "final_candidate_installed": true,
     "final_candidate_host_sha256": "1b9619623baae0cfae88ebaef5713ac4658dbcd9251572538f9939c3833c4fb5"
+  },
+  "m3_build_evidence": {
+    "version": "0.3.4",
+    "scope": "Current full portable checks passed; new exact metadata and nine class identifiers resolved; installed and backup hash verified; no live/NVDA acceptance of new paths; full M3 pending",
+    "final_candidate_installed": true,
+    "final_candidate_host_sha256": "d81887f9698721695bb5539ab8a72cd8a7a762cf56c67bd6b007f5c88f98f2c8"
   }
 }

@@ -4,6 +4,76 @@
 [источник и условия](research/template-import.md).
 Метод исследования — [GAME_DISCOVERY.md](GAME_DISCOVERY.md).
 
+## Дополнение M3, 0.3.4, 13 октября 2026
+
+Повторный PE/CLI inventory и последний журнал загрузки подтверждают ту же
+GOG 1.61, Unity 2020.3.23f1, Mono x64 и BepInEx 5.4.23.5. TG.Main:
+SHA-256 `26c0f468bc6cc2e28380dd8b81dda23c90b316c2b9b128c306599810878af4ca`,
+MVID `78793877-83a2-4bfc-970d-974256f05d98`. Assembly-CSharp также включена
+в inventory; перечисленные ниже новые члены находятся в TG.Main.
+Способ нахождения: локальные метаданные и ILSpy 11.1; игровые файлы не публикуются.
+
+- `Awaken.TG.Main.Heroes.Fights.Deck.VRuneSkill._runeThresholds`:
+  `Dictionary<UnityEngine.GameObject,int>`. `CreateThresholds()` создаёт
+  видимые деления из RuneThreshold1..N, `UpdateView()` окрашивает их по заряду.
+  Мод читает только значения делений с живыми видимыми GameObject, без
+  вычисления результата ultimate. Действие остаётся `private void ApplyClick()`.
+- `Awaken.TG.Main.Fights.NpcFighters.Tiers.VFighterTier.tierNumber`:
+  `TextMeshProUGUI`. `RefreshTier()` выводит `CurrentTierNumber`; inherited
+  `TooltipConstructor` через `TooltipWithText` даёт текущее описание уровня.
+  Число теперь доступно отдельно и обновляется через Live-watch. Привязка
+  владельца — `IStatusSource.Character`; видимость — текущий view/Canvas/TMP.
+- `Awaken.TG.Main.Journal.UI.ViewComponents.VCCardPreview._normalBackground`:
+  `bool`. `VRuneDeckUI.SpawnCard(Skill,bool)` передаёт сюда `available` через
+  `Fill(Skill,bool,bool,bool)`: обычный фон означает доступную карту, затемнённый —
+  использованную. Это показанный признак, а не чтение будущего выбора RuneDeck.GetCard.
+  Все карты этого просмотра остаются без действия розыгрыша.
+- `VCCardPreview.AllowCardSpec`: `bool`; `Handle(UIEvent)` открывает
+  `CardSpecPage` по `UIKeyDownAction.Name=ToggleMap` только при AllowCardSpec.
+  Этот оригинальный handler теперь доступен и из классовой колоды через Backspace.
+  `CardSpecPage` получает отдельный приоритет; Escape возвращает прежний фокус.
+- `VCCardPreview._knownDescription`: `bool` — прежняя привязка, уточнено чтение.
+  TooltipConstructor возвращает пустой текст, когда у ParentView.GenericTarget
+  уже открыт CardSpecPage. Поэтому Space в просмотре стороны читает фактический
+  `skillOnPlayDesc`, когда tooltip пуст. При unknown сам tooltip не запрашивается;
+  остаётся показанное игрой Unknown. Аналогичный fallback применён к руке.
+- Классовая графическая подсказка `V3DFightBoardUI.viewCanvas` теперь содержит
+  пункт чтения исходных `VRuneSkill.TooltipConstructor/RuneSubTooltip`. Пиксели
+  картинки по-прежнему не расшифровываются; это исходное текстовое описание умения.
+  Закрытие — тот же `closeDruidTutorialButton.OnClick`.
+- `VPossibleOrbCombine.ToggleVisibility(bool,TweenDirection?,bool)` плавно
+  меняет CanvasGroup.alpha; прежний и новый варианты могут одновременно иметь
+  видимые view. У каждого `fuseButton` handler `PossibleOrbCombine.Fuse()`.
+  Ключ кнопки теперь содержит Model.ID её настоящего владельца и роль действия.
+  Это предотвращает duplicate identity при перекрывающихся анимациях;
+  CanvasGroup.interactable и исходный ARButton по-прежнему решают доступность.
+
+Локально прочитаны RuneUnlocking.RuneName и подтверждены девять статических
+идентификаторов: Archer, Sharpshooter, Flipper, Wyrdhunter, Pathfinder, Berserk,
+Summoner, BloodMage, Necromancer. Empty — служебный вариант. В VRuneSkill нет
+раздельных handlers по этим именам: он работает с текущей RuneUI.Skill;
+RuneDeck определяется наличием элемента, а не предположением о классе.
+Проверены общие пути FighterTiers для BloodFighterTier/EleFighterTier/EtherealTier,
+LichForm и SkillEffectCardTransform/SkillEffectFlipHandBy. Их внутренние действия
+мод не вызывает: преобразование запускается исходным розыгрышем/ultimate, после
+него дерево читает появившиеся UI и экземпляры. Матрица —
+[m3-class-coverage.md](research/m3-class-coverage.md).
+
+0.3.4: Graph 94, Runtime 84, Windows 18, Python 21; ошибок 0. Регрессии с прежним
+способом чтения/ключей дали два ожидаемых сбоя: пустое описание стороны и
+duplicate identity кнопок награды. Исправленная реализация прошла. BindingChecks
+подтвердил новые члены, девять идентификаторов и восемь валют; сборка без
+ошибок/предупреждений. Это portable-tested и compiled-with-game, не игровые действия.
+
+Установка 0.3.4 выполнена при закрытой игре; шесть файлов пакета и копия прежней
+0.3.3 проверены по SHA-256. На сценарий сохранения карты пользователь ответил:
+«Такое окно пока не появилось». Это отсутствие игрового наблюдения, а не успешное
+продолжение. Статический риск HeroFighter.EndTurn остаётся открытым: при выборе
+мод не меняет `_isExecutingTurn`, token или DiscardHandDestinationOverride.
+Добавлена запись состояния только при исходном подтверждении
+`combat.retain.confirm`, чтобы следующий живой сценарий можно было разобрать.
+Новая 0.3.4 пока без in-game-tested и blind-user-accepted.
+
 ## Названия значков ресурсов после боя, 0.3.3
 
 13 октября пользователь указал класс «егерь» и сообщил, что после боя

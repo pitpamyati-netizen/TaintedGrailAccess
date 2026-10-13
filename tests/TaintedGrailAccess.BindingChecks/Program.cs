@@ -36,6 +36,14 @@ try
         .Where(name => !mappedSprites.Contains(currencyStats.GetField(name, BindingFlags.Public | BindingFlags.Static)!)).ToArray();
     if (missingCurrencies.Length != 0) throw new InvalidOperationException("Не названы значки ресурсов результата боя: " + string.Join(", ", missingCurrencies));
     Console.WriteLine("Все восемь значков ресурсов результата боя связаны с игровыми названиями.");
+    // Every real class uses RuneUI/VRuneSkill. Empty is a placeholder, not a tenth class.
+    // Check names without running static initializers or unlocking the user's classes.
+    var runeNames = game.GetType("Awaken.TG.Main.Classes.RuneUnlocking+RuneName", true)!;
+    var expectedClasses = new[] { "Archer", "Sharpshooter", "Flipper", "Wyrdhunter", "Pathfinder", "Berserk", "Summoner", "BloodMage", "Necromancer" };
+    var actualClasses = runeNames.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
+        .Where(field => field.FieldType == runeNames && field.Name != "Empty").Select(field => field.Name).OrderBy(name => name).ToArray();
+    if (!actualClasses.SequenceEqual(expectedClasses.OrderBy(name => name))) throw new InvalidOperationException("Перечень классов отличается от исследованных девяти вариантов.");
+    Console.WriteLine("Подтверждены девять классов и общие привязки ultimate, порогов, уровней прислужников и просмотра карт.");
     foreach (var name in new[] { "TG.Main", "Rewired_Core", "UnityEngine.UI", "Unity.TextMeshPro" })
     {
         var assembly = Assembly.Load(name);

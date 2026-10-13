@@ -56,6 +56,116 @@ namespace TaintedGrailAccess.Runtime.Tests
             card.Enabled = false; rig.Graph.Activate();
             Check(rig.Activations == 1, "A newly unavailable card cannot be played.");
         }
+        public static void CardDetailVisibility()
+        {
+            int queried = 0;
+            Func<string> tooltip = () => { queried++; return "Подробности"; };
+            var shown = "Описание показанной стороны";
+            Check(CombatPresentation.CardDetail(true, tooltip, () => shown) == "Подробности" && queried == 1,
+                "A known card retains its original tooltip.");
+            Check(CombatPresentation.CardDetail(false, tooltip, () => "Неизвестно") == "Неизвестно" && queried == 1,
+                "Never query the tooltip behind an unknown description.");
+            foreach (var empty in new[] { null, "", " \r\n" })
+                Check(CombatPresentation.CardDetail(true, () => empty, () => shown) == shown,
+                    "CardSpecPage's empty tooltip must fall back to its visible description.");
+            shown = "Описание преобразованной стороны";
+            Check(CombatPresentation.CardDetail(true, () => "", () => shown) == shown,
+                "A side change uses the newly displayed description.");
+            Check(CombatPresentation.CardDetail(false, tooltip, null) == null && queried == 1,
+                "Missing shown text cannot reveal hidden details.");
+        }
+        public static void ClassDeckNestedInspection()
+        {
+            bool deck = false, sides = false, used = false;
+            int played = 0;
+            var rune = new object(); var card = new object();
+            var faults = new FaultBoundary(new NullLog()); var screens = new ScreenManager(faults);
+            screens.Register(new TestScreen("combat", 0, () => true, builder =>
+                CombatPresentation.Add(builder, rune, "ultimate", () => "Классовое умение", () => "4/8", null, null,
+                    () => played++, null, () => deck = true)));
+            screens.Register(new BackScreen("deck", 1, () => deck, builder =>
+                CombatPresentation.Add(builder, card, "deck.card", () => "Карта", null,
+                    () => used ? "Использована" : "Доступна", null, null, null, () => sides = true), () => deck = false));
+            screens.Register(new BackScreen("sides", 2, () => sides, builder =>
+                CombatPresentation.Add(builder, new object(), "side", () => "Другая сторона", null, null, null, null, null), () => sides = false));
+            var speech = new RecordingSpeech();
+            using (var runtime = new AccessibilityRuntime(screens, new Navigator(speech,
+                new Localizer(new Dictionary<string, string>()), faults), new InputArbitration()))
+            {
+                long frame = 0;
+                Action<KeyChord[]> step = chords => runtime.Update(++frame, chords);
+                step(Array.Empty<KeyChord>()); step(new[] { new KeyChord(UiKey.Backspace) });
+                Check(screens.Current.Screen.Id == "deck", "Secondary opens the class deck.");
+                step(new[] { new KeyChord(UiKey.Enter) });
+                Check(played == 0, "Inspection never activates the underlying ultimate.");
+                speech.Lines.Clear(); used = true; step(Array.Empty<KeyChord>());
+                Check(speech.Lines.Count(line => line.Text == "Использована" && !line.Interrupt) == 1,
+                    "A displayed used-card state changes in the queued live announcement.");
+                step(Array.Empty<KeyChord>());
+                Check(speech.Lines.Count(line => line.Text == "Использована") == 1, "Repeated frames do not repeat the state.");
+                step(new[] { new KeyChord(UiKey.Backspace) });
+                Check(screens.Current.Screen.Id == "sides", "A class card can open a nested side inspection.");
+                step(new[] { new KeyChord(UiKey.Enter) });
+                Check(played == 0, "A side inspection has no play action.");
+                step(new[] { new KeyChord(UiKey.Escape) });
+                Check(screens.Current.Screen.Id == "deck" && runtime.Navigator.Current.Id.Reference == card,
+                    "Closing sides restores the same inspected card.");
+                step(new[] { new KeyChord(UiKey.Escape, isRepeat: true) });
+                Check(screens.Current.Screen.Id == "deck", "Holding the same Escape cannot close the covered deck.");
+                step(new[] { new KeyChord(UiKey.Escape) });
+                Check(screens.Current.Screen.Id == "combat" && runtime.Navigator.Current.Id.Reference == rune,
+                    "A separate Escape returns to the same ultimate.");
+                step(new[] { new KeyChord(UiKey.Enter, isRepeat: true) });
+                Check(played == 0, "Holding Enter after inspection cannot play the ultimate.");
+                step(new[] { new KeyChord(UiKey.Enter) });
+                Check(played == 1, "A new press invokes the original action once after returning.");
+            }
+        }
+
+        private sealed class RecordingSpeech : ISpeechOutput
+        {
+            public readonly List<(string Text, bool Interrupt)> Lines = new List<(string, bool)>();
+            public void Speak(string text, bool interrupt) { Lines.Add((text, interrupt)); }
+            public void Stop() { }
+        }
+        public static void RewardActionIdentity()
+        {
+            var rewards = new List<Card> { new Card("first-reward"), new Card("second-reward") };
+            var state = new GraphState(); var fused = new List<string>();
+            var graph = new KeyGraph(state, () =>
+            {
+                var builder = new GraphBuilder(state);
+                foreach (var reward in rewards)
+                {
+                    var current = reward;
+                    CombatPresentation.Add(builder, current, CombatPresentation.ActionKey(current.Id, "fuse"),
+                        () => "Объединить", null, () => current.Enabled ? null : "Недоступно", null,
+                        () => { if (rewards.Contains(current) && current.Enabled) fused.Add(current.Id); }, null);
+                }
+                return builder.Build();
+            });
+            graph.FocusByReference(rewards[1]);
+            var rebuilt = new Card("second-reward"); rewards[1] = rebuilt;
+            graph.Rerender();
+            Check(graph.Current.Id.Reference == rebuilt, "Structural identity restores the same reward after a view rebuild.");
+            rewards[0].Enabled = false; graph.Activate();
+            Check(fused.SequenceEqual(new[] { "second-reward" }), "Equal action labels must activate only the chosen instance.");
+            rewards.Remove(rebuilt); graph.Rerender(); graph.Activate();
+            Check(fused.Count == 1, "A disappeared reward cannot invoke an old fuse delegate; the disabled survivor stays disabled.");
+        }
+        private sealed class BackScreen : AccessibleScreen
+        {
+            private readonly string _id; private readonly int _layer;
+            private readonly Func<bool> _active; private readonly Action<GraphBuilder> _build; private readonly Action _back;
+            public BackScreen(string id, int layer, Func<bool> active, Action<GraphBuilder> build, Action back)
+            { _id = id; _layer = layer; _active = active; _build = build; _back = back; }
+            public override string Id => _id;
+            public override string ScreenName => _id;
+            public override int Layer => _layer;
+            public override bool IsActive() => _active();
+            public override void Build(GraphBuilder builder) => _build(builder);
+            public override bool OnBack() { _back(); return true; }
+        }
         public static void DuplicateIdentityAndRemoval()
         {
             var rig = new Rig(); var one = new Card("one"); var two = new Card("two"); var three = new Card("three");

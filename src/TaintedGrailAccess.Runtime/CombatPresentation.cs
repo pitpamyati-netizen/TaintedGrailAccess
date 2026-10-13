@@ -53,6 +53,23 @@ namespace TaintedGrailAccess.Runtime
         /// <summary>Rejects a target that disappeared, died, became hidden or ceased to be legal.</summary>
         public static bool CanTarget(bool screenOwnsInput, bool shown, bool alive, bool stillListed, bool legal)
         { return screenOwnsInput && shown && alive && stillListed && legal; }
+
+        /// <summary>Reads a shown card's detail without querying a concealed description.
+        /// CardSpecPage deliberately suppresses its tooltip; its visible description remains readable.</summary>
+        public static string CardDetail(bool knownDescription, Func<string> tooltip, Func<string> shownDescription)
+        {
+            if (knownDescription && tooltip != null)
+            {
+                var detail = tooltip();
+                if (!string.IsNullOrWhiteSpace(detail)) return detail;
+            }
+            return shownDescription == null ? null : shownDescription();
+        }
+
+        /// <summary>Keys repeated action buttons by their current model instance and handler role.
+        /// Equal labels and overlapping reward animations must not create duplicate controls.</summary>
+        public static string ActionKey(string modelId, string action)
+        { return "combat.action." + modelId + "." + action; }
     }
 
     /// <summary>Announces append-only visible log entries once, retaining only strings and a session key.</summary>

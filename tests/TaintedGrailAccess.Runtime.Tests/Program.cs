@@ -13,6 +13,9 @@ namespace TaintedGrailAccess.Runtime.Tests
         private static readonly List<(string Name, Action Test)> Cases = new List<(string, Action)>
         {
             ("combat_inspection_never_plays_and_actions_are_fresh", CombatTests.InspectionAndFreshAction),
+            ("combat_card_detail_empty_tooltip_and_hidden_description", CombatTests.CardDetailVisibility),
+            ("combat_class_deck_nested_sides_return_and_held_input", CombatTests.ClassDeckNestedInspection),
+            ("combat_reward_equal_buttons_overlap_replace_and_disappear", CombatTests.RewardActionIdentity),
             ("combat_duplicate_instance_reorder_deletion_and_empty_hand", CombatTests.DuplicateIdentityAndRemoval),
             ("combat_hand_focus_survives_targeting_first_last_card_and_empty_hand", CombatTests.HandFocusAcrossSectionsAndTargeting),
             ("combat_info_exact_chords_modifier_matrix", CombatReadoutTests.ExactChordMatrix),
