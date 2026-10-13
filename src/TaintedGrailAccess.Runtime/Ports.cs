@@ -12,6 +12,12 @@ namespace TaintedGrailAccess.Runtime
         void Stop();
     }
 
+    /// <summary>Speech for editable user content. Implementations must omit its text from transcripts.</summary>
+    public interface IPrivateSpeechOutput : ISpeechOutput
+    {
+        void SpeakPrivate(string text, bool interrupt);
+    }
+
     public interface IRuntimeLog
     {
         void Write(string category, string message);

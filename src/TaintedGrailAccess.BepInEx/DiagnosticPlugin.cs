@@ -16,7 +16,7 @@ namespace TaintedGrailAccess.BepInExHost
     /// Speech success is not complete game accessibility.
     /// </summary>
     [DefaultExecutionOrder(-32000)]
-    [BepInPlugin("org.taintedgrailaccess.diagnostics", "Tainted Grail Access Diagnostics", "0.1.3")]
+    [BepInPlugin("org.taintedgrailaccess.diagnostics", "Tainted Grail Access Diagnostics", "0.2.0")]
     public sealed class DiagnosticPlugin : BaseUnityPlugin
     {
         private WindowsSpeechOutput _speech;
@@ -103,7 +103,7 @@ namespace TaintedGrailAccess.BepInExHost
                     }
                 }
                 var titleInput = Config.Bind("Accessibility", "EnableTitleInput", false,
-                    "Enable fingerprinted title/settings controls for M1 verification; unsupported screens keep ordinary input.");
+                    "Enable fingerprinted menus, settings and the first path to combat; unsupported screens keep ordinary input.");
                 if (titleInput.Value)
                 {
                     try
@@ -140,6 +140,8 @@ namespace TaintedGrailAccess.BepInExHost
             _titleInput?.OnWindowFocusChanged(focused);
             if (!focused) _speech?.Stop();
         }
+
+        private void LateUpdate() { _titleInput?.ObserveText(); }
 
         private void OnDestroy()
         {

@@ -4,9 +4,8 @@ using System.Linq;
 
 namespace TaintedGrailAccess.Runtime
 {
-    // This is the tested ownership MODEL. Real Rewired/EventSystem/game-handler
-    // hooks are a separate, unimplemented game adapter. Never call this proof
-    // of physical input suppression inside Conquest.
+    // Per-frame ownership model. Physical Rewired/EventSystem/game-handler hooks
+    // live in the fingerprinted game host; isolated model tests alone do not prove them.
     public sealed class InputArbitration
     {
         private readonly HashSet<KeyChord> _claims = new HashSet<KeyChord>();
@@ -29,7 +28,8 @@ namespace TaintedGrailAccess.Runtime
             // Keep chords already consumed before a key-binding dialog opened.
             // BeginFrame clears them on the following frame.
         }
-        public void Claim(KeyChord chord) { if (!RawCapture) _claims.Add(chord); }
+        /// <summary>Native text commands may claim their explicitly handled chord during capture.</summary>
+        public void Claim(KeyChord chord, bool nativeTextCommand = false) { if (!RawCapture || nativeTextCommand) _claims.Add(chord); }
         /// <summary>Reports an explicit consumed chord, independently of modal policy.</summary>
         public bool IsClaimed(KeyChord chord) { return _claims.Contains(chord); }
         public bool ShouldSuppressGameChord(KeyChord chord)

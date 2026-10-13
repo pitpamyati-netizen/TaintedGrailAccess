@@ -20,6 +20,7 @@ namespace TaintedGrailAccess.Windows.Tests
                 FailedLoggingDoesNotEscape();
                 WrongThreadIsRejected();
                 MissingConfiguredDllIsSafe();
+                PrivateContentIsNeverTranscribed();
                 Console.WriteLine("PASS Windows safe-failure suite: " + _checks + " assertions. Native speech and the game were not tested.");
                 return 0;
             }
@@ -100,10 +101,24 @@ namespace TaintedGrailAccess.Windows.Tests
             if (!condition) throw new InvalidOperationException(message);
         }
 
+        private static void PrivateContentIsNeverTranscribed()
+        {
+            var log = new CollectingLog();
+            using (var output = new WindowsSpeechOutput(new SpeechOptions { Backend = "transcript", AllowSapiFallback = false }, log))
+            {
+                output.SpeakPrivate("private-user-content", true);
+                output.SpeakPrivate("private-selection", false);
+                Check(log.Count("speech.request.interrupt") == 1 && log.Count("speech.request.queue") == 1, "Private request provenance is preserved.");
+                Check(log.Messages.All(message => !message.Contains("private-user-content") && !message.Contains("private-selection")), "User content must never enter the transcript.");
+                Check(log.Count("speech.accepted") == 0, "A private transcript marker does not prove native speech.");
+            }
+        }
+
         private sealed class CollectingLog : IRuntimeLog
         {
             private readonly List<string> _categories = new List<string>();
-            public void Write(string category, string message) { lock (_categories) _categories.Add(category); }
+            public readonly List<string> Messages = new List<string>();
+            public void Write(string category, string message) { lock (_categories) { _categories.Add(category); Messages.Add(message); } }
             public int Count(string category) { lock (_categories) return _categories.Count(value => value == category); }
         }
         private sealed class ThrowingLog : IRuntimeLog

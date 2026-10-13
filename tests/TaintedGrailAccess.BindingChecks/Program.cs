@@ -26,7 +26,7 @@ try
     var host = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.Combine(directories[1], "TaintedGrailAccess.BepInEx.dll"));
     var bindings = host.GetType("TaintedGrailAccess.BepInExHost.TitleUiBindings", true)!;
     var constructor = bindings.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Single();
-    constructor.Invoke(new object[] { game, new Localizer(new Dictionary<string, string>()), new NullLog() });
+    constructor.Invoke(new object[] { game, new Localizer(new Dictionary<string, string>()), new NullLog(), null! });
     foreach (var name in new[] { "TG.Main", "Rewired_Core", "UnityEngine.UI", "Unity.TextMeshPro" })
     {
         var assembly = Assembly.Load(name);

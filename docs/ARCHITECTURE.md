@@ -9,10 +9,10 @@
 | Компонент | Ответственность | Фактический статус |
 | --- | --- | --- |
 | `TaintedGrailAccess.Graph` | Узлы, идентичность, связи, builder, cursor, операции, компоновка текста | Реализован; отдельно компилируется; поведенческие тесты |
-| `TaintedGrailAccess.Runtime` | Навигатор, речевая политика, экраны, локализация, модель ownership | Реализован; проверен на изменяемых fake screens |
-| `TaintedGrailAccess.Windows` | NVDA controller, необязательный Tolk, SAPI, transcript-only | Реализован; сборка и безопасные отказы проверены; настоящий звук не проверен |
-| `TaintedGrailAccess.BepInEx` | Диагностический Mono plugin, startup log, export signatures | Исходник подготовлен; требует игровых/loader refs и проверки в игре |
-| Будущий Conquest adapter | Живые модели, экраны, handlers, Rewired/EventSystem, перемещение | Не реализован; неизвестные имена API не подставлены |
+| `TaintedGrailAccess.Runtime` | Навигатор, речевая политика, экраны, локализация, ownership, feedback текста, форматирование речи | Переносимые поведенческие тесты; используется живым host |
+| `TaintedGrailAccess.Windows` | NVDA controller, необязательный Tolk, SAPI, transcript-only, частная речь | NVDA принят для M1–M2; другие backends не приняты |
+| `TaintedGrailAccess.BepInEx` | Mono plugin, проверка отпечатков, живые экраны, original handlers и input hooks | 0.2.0 собран с игровыми файлами; первый путь до боя принят с NVDA |
+| Будущие адаптеры боя/мира | Карты, цели, ресурсы, движение и весь забег | M3–M5 не реализованы; неизвестные имена API не подставлены |
 
 Основные библиотеки имеют целевой `netstandard2.0`, C# 7.3. Тестовый процесс —
 `net8.0`. Это разные среды: запуск теста .NET 8 не доказывает загрузку плагина
@@ -25,16 +25,17 @@
 | --- | --- | --- |
 | P1 State read | Build и живые delegates в `NodeVtable` | Источники данных, дешёвое чтение, правила видимости, время жизни моделей |
 | P2 Action invoke | Поведенческие slots и `EnterOwnAction` | Точный оригинальный handler каждого действия и его предусловия |
-| P3 Tick | `AccessibilityRuntime.Update`; диагностический Unity Update | Настоящий порядок вызовов относительно input/game ticks |
-| P4 Key input/arbitration | `KeyChord`, consumed-contract, `InputArbitration` | Физический capture, Rewired, EventSystem, exclusivity, key-up/repeat |
-| P5 Speech | `ISpeechOutput`, Windows backend | Реальный NVDA/JAWS/SAPI, архитектура DLL, очередь и отмена |
+| P3 Tick | `UpdateLive`, ранние input prefixes, наблюдение текста после native editing | Следующие игровые сцены и действия M3–M5 |
+| P4 Key input/arbitration | `PhysicalInputGate`, live Rewired contributors, scoped Submit guards | Четыре пути проверены для M1–M2; следующие адаптеры требуют своей проверки |
+| P5 Speech | `ISpeechOutput`, `IPrivateSpeechOutput`, Windows backend | NVDA принят; JAWS/SAPI требуют отдельной проверки |
 | P6 Sound | `ISoundOutput`, opaque sound slots | Существующие звуки игры и отсутствие их дублирования |
-| P7 Localization | `Localizer`, `locales/*.properties`, startup tables | Подключение к настройке языка игры и семантика её icon text |
+| P7 Localization | `Localizer`, ru/en, игровой локализованный текст, живая таблица input icons | Семантика боевых значков M3; неизвестные обозначаются явно |
 | P8 Settings | Фильтр type/kind, позиции; BepInEx diagnostic config | Сохранение всех пользовательских параметров и доступный settings screen |
 | P9 Logging | Focus trace API, изоляция ошибок, diagnostic speech transcript | Доступный пятистрочный журнал/полный обзор и корреляция игровых событий |
 
-**Наличие P4-модели не означает, что ввод уже подавлен внутри игры.** До проверки
-реальных четырёх путей production navigator в host не подключается.
+**Наличие P4-модели не доказывает игровую проверку.** Подключённый host M1–M2
+имеет отдельные подтверждения четырёх путей; переносимые тесты следующих
+адаптеров не заменяют проверки их живых handlers и NVDA.
 
 ## 3. Одноразовые деревья и постоянный курсор
 
@@ -83,6 +84,10 @@ MemberInfo и проверенные описания binding можно кеш�
 получают проверенные текстовые имена. Нельзя механически удалять значок энергии,
 если он несёт смысл; нельзя превращать `< 3` в потерянное математическое условие.
 Встроенный search stripper решает поиск, а не всю семантику игровых rich strings.
+`FormattedSpeechOutput` убирает только известные теги оформления и сохраняет
+математические условия; имена показанных input icons разрешаются заново через
+текущую `InputActionsToTextMapping`. Частная речь редактора обходит преобразование
+и обычный transcript. Если частный backend отсутствует, обычного fallback нет.
 
 ## 5. Ввод: четыре независимых пути
 
@@ -118,9 +123,11 @@ target modal, а подтверждение — reward screen. Следующа�
 в новый контекст. Screen predicates и Build изолируются; ошибка логируется
 один раз на пару screen/type, а не на изменяющийся текст исключения.
 
-`Dispose` runtime освобождает ownership и состояния. Будущий host также снимает
-только свои Harmony hooks и возвращает изменённое native selection/input state.
-Diagnostic host не устанавливает hooks, поэтому это пока обязательство адаптера.
+`Dispose` runtime освобождает ownership и состояния. Host снимает только свои
+Harmony hooks, очищает слабые ссылки контроллеров и возвращает клавиши игре.
+Выбор World выполняется каждый callback: живое окно ScenePreloader → готовая
+BaseScene → TitleScreen. Переход сцены сохраняет присвоенные удерживаемые клавиши
+до отпускания; полное освобождение выполняется при отключении/ошибке/Dispose.
 
 ## 7. События боя и обзор
 

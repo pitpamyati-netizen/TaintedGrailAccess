@@ -5,7 +5,7 @@
 приведено самим дополнением; это не независимая сертификация данной реализации.
 
 Обозначения: **код** — реализованная переносимая логика; **тест** — собственная
-поведенческая проверка; **интеграция** — обязательство будущего игрового host.
+поведенческая проверка; **интеграция** — проверка с живой игрой.
 Ни одна строка «код/тест» не означает, что соответствующая функция доступна в
 запущенной Conquest. Точные результаты последнего прогона — в TEST_RESULTS.md.
 
@@ -17,10 +17,10 @@
 | A2: immediate mode | Rerender, новый builder; TitleUiBindings/LiveViewSelection | World читается в callback и освобождается; view/delegates не сохраняются |
 | A3: identity, не render reference | ControlId; reference/structural/backward survivor tests | Domain id конкретной карты нужно найти |
 | A4: announce once | Navigator.AnnounceLanding, differ/direct memory; speech/sound-failure tests | Игровые hooks не должны добавлять сторонние focus Speak |
-| A5: оригинальные handlers | ARButton.Handle, Button/Toggle.OnSubmit, AllSettingsUI.Close, TMP selection/click | Ограниченный стартовый путь 0.1.3; полный UI остаётся M2–M5 |
-| A6: видимость как у зрячего | Живые Model.Views, active/Canvas/CanvasGroup/TMP, top modal, Interactable | Стартовая сцена GOG 1.61; скрытые игровые данные не читаются |
-| A7: provenance речи | Interrupt для прямого input, queue для differ/Live | Native очереди нужно проверить с настоящим NVDA |
-| A8: локализация | Localizer и таблицы ru/en, включая стартовые сообщения | PressStart передаёт текущий игровой текст; семантика icon text ещё требует интеграции |
+| A5: оригинальные handlers | ARButton.Handle, Button/Toggle.OnSubmit, MoveSlider, TMP selection/click, loading/story wait Handle | Первый путь M2 принят с NVDA; карточный бой и полный забег остаются M3–M5 |
+| A6: видимость как у зрячего | Живые Model.Views, active/Canvas/CanvasGroup/TMP, top modal, Interactable | Меню, загрузка и начальные диалоги GOG 1.61; скрытые игровые данные не читаются |
+| A7: provenance речи | Interrupt для прямого input, queue для differ/Live, отдельный private канал | NVDA принят для первого пути; другие backends не приняты |
+| A8: локализация | Localizer ru/en, текущий игровой текст, очистка оформления и живая InputActionsToTextMapping | Неизвестные иконки обозначаются явно; семантика боевых значков остаётся M3 |
 | P1–P9 | Подробная таблица в ARCHITECTURE.md | Особо P4: ownership model не заменяет физические hooks |
 
 ## Ядро: разделы 3–6
@@ -76,16 +76,17 @@
 
 ## Четыре пути ввода: раздел 8
 
-| Путь | Статус 0.1.3 |
+| Путь | Статус 0.2.0 |
 | --- | --- |
-| Poller мода | Early Update и prefixes TitleScreen, GameUI, EventSystem; once/frame, held/release/blur; 11 тестов tracker и 8 новых регрессий |
+| Poller мода | Early Update и prefixes TitleScreen, BaseScene, GameUI, EventSystem, loading; once/frame, held/release/blur; приоритет живой загрузки |
 | Global keymap/Rewired | Живые enabled keyboard maps; suppress только присвоенных источников. UINaviAction использует фактические Horizontal/Vertical |
 | UI focus/Submit | Own-action scope; Focus/ARButton и Unity Button/Toggle/Move guards; открывающий Enter защищён и в TMP/InputField.KeyPressed |
 | Exclusive modal | Только собственная справка Ctrl+F1. GameUI, Rewired, selected-object keyboard gate; Escape возвращает сохранённый cursor |
 
 Меню, физический повтор, Alt+Tab, справка, rebind/cancel и возврат проверены
 в игре с NVDA; native text capture и набор/удаление также подтверждены.
-Речевой просмотр текста остаётся M2; сценарий — в M1_VERIFICATION.md.
+Речевой просмотр и редактирование текста приняты с NVDA; сценарии —
+M1_VERIFICATION.md и M2_VERIFICATION.md. Вход в первый бой принят отдельно.
 Raw/text отключают навигацию и поиск. Unknown chords вне собственной modal
 проходят игре; KeyUp не мешает штатной очистке held state. Exit/disable/failure
 освобождают ownership; Dispose снимает только собственные Harmony patches.

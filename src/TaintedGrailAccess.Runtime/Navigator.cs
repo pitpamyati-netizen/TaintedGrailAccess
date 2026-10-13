@@ -140,6 +140,18 @@ namespace TaintedGrailAccess.Runtime
             }
         }
 
+        /// <summary>Native editor commands retain a consumed press even if their handler throws after acting.</summary>
+        public bool HandleNativeTextInput(KeyChord chord, Func<KeyChord, bool> handler)
+        {
+            if (!RealTextFieldActive || handler == null) return false;
+            try { return handler(chord); }
+            catch (Exception error)
+            {
+                _faults.Report(_session == null ? "native-text" : _session.Screen.Id, error);
+                return true;
+            }
+        }
+
         private bool HandleCore(KeyChord chord)
         {
             try { if (_session.Screen.OnContextualInput(chord)) return true; }

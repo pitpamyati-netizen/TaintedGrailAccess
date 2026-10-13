@@ -138,6 +138,87 @@ namespace TaintedGrailAccess.Runtime.Tests
                 Check(!rig.Runtime.Input.OwnAction, "Ownership scope must unwind on exception.");
             }
         }
+
+        public static void NativeTextCommands()
+        {
+            using (var rig = new Rig())
+            {
+                rig.Capture = true;
+                int reads = 0, finishes = 0;
+                Func<KeyChord, bool> native = chord =>
+                {
+                    Check(rig.Runtime.Input.OwnAction, "Native editor commands need the same ownership scope.");
+                    if (chord.Key == UiKey.F1) { if (!chord.IsRepeat) reads++; return true; }
+                    if (chord.Key == UiKey.Enter) { if (!chord.IsRepeat) { finishes++; rig.Capture = false; } return true; }
+                    return false;
+                };
+                Action<int, HeldKey[]> poll = (frame, keys) => rig.Gate.Poll(frame, frame * 0.1, true, keys, rig.Runtime, () => rig.Capture, native);
+                poll(0, Array.Empty<HeldKey>());
+                poll(1, new[] { Held(UiKey.F1, Modifiers.Control), Held(UiKey.Left) });
+                poll(2, new[] { Held(UiKey.F1, Modifiers.Control), Held(UiKey.Left) });
+                Check(reads == 1 && rig.Calls == 0, "Reading must act once without activating any UI action.");
+                Check(rig.Gate.Suppress(new KeyChord(UiKey.F1, Modifiers.Control)), "The read chord is owned throughout its hold.");
+                Check(!rig.Gate.Suppress(new KeyChord(UiKey.Left)), "Native caret keys remain with the actual field.");
+                poll(3, Array.Empty<HeldKey>());
+                poll(4, new[] { Held(UiKey.Enter, Modifiers.Control) });
+                poll(5, new[] { Held(UiKey.Enter, Modifiers.Control) });
+                Check(finishes == 1 && rig.Calls == 0, "Finishing cannot also activate a form or its button.");
+                Check(rig.Gate.Suppress(new KeyChord(UiKey.Enter, Modifiers.Control)), "The finish chord must stay owned after leaving editing.");
+                Check(!rig.Runtime.Input.OwnAction, "Native command scope must close.");
+            }
+        }
+
+        public static void NativeCaptureCommandsStandDown()
+        {
+            using (var rig = new Rig())
+            {
+                rig.Capture = true; int callbacks = 0;
+                Func<KeyChord, bool> raw = chord => { callbacks++; return false; };
+                rig.Gate.Poll(0, 0, true, Array.Empty<HeldKey>(), rig.Runtime, () => rig.Capture, raw);
+                rig.Gate.Poll(1, 0.1, true, new[] { Held(UiKey.Enter, Modifiers.Control) }, rig.Runtime, () => rig.Capture, raw);
+                Check(callbacks == 1 && !rig.Gate.Suppress(new KeyChord(UiKey.Enter, Modifiers.Control)), "Unknown/raw fields must receive their own chord.");
+                rig.Gate.Blur();
+                rig.Gate.Poll(2, 0.2, true, new[] { Held(UiKey.Enter, Modifiers.Control) }, rig.Runtime, () => rig.Capture, raw);
+                Check(callbacks == 1, "A native command held across window return cannot replay.");
+            }
+        }
+
+        public static void SceneReplacementRetainsConsumedPress()
+        {
+            using (var rig = new Rig())
+            {
+                rig.Poll(0); rig.Poll(1, Held(UiKey.Enter));
+                rig.Gate.Blur(); rig.Runtime.Screens.Clear(); rig.Runtime.Navigator.Attach(null);
+                rig.Poll(2, Held(UiKey.Enter));
+                Check(rig.Calls == 1 && rig.Gate.Suppress(new KeyChord(UiKey.Enter)), "A new supported scene cannot receive the consumed held Submit.");
+                rig.Poll(3); rig.Poll(4, Held(UiKey.Enter));
+                Check(rig.Calls == 2, "The replacement scene is usable after releasing the opener.");
+            }
+        }
+
+        public static void LoadingOverlayOwnsReadyScene()
+        {
+            var title = new object();
+            var loader = new object();
+            var scene = new object();
+            bool loadingVisible = false, sceneReady = false, titleAlive = true;
+            int sceneReads = 0;
+            Func<object> choose = () => LiveUiWorldSelection.Resolve(
+                () => loadingVisible ? loader : null,
+                () => { sceneReads++; return sceneReady ? scene : null; },
+                () => titleAlive ? title : null);
+            Check(ReferenceEquals(title, choose()), "Before loading, the title owns UI.");
+            loadingVisible = true; titleAlive = false; sceneReady = true;
+            sceneReads = 0;
+            Check(ReferenceEquals(loader, choose()) && sceneReads == 0,
+                "A ready additive scene must not hide the loading confirmation in its separate World.");
+            loadingVisible = false;
+            Check(ReferenceEquals(scene, choose()), "Closing loading resolves the live scene immediately.");
+            scene = new object();
+            Check(ReferenceEquals(scene, choose()), "The previous scene World is never cached.");
+            sceneReady = false;
+            Check(choose() == null, "Destroyed/unready controllers leave native input without a stale UI source.");
+        }
         private sealed class MenuView { public bool Visible; }
         public static void NonMainView()
         {

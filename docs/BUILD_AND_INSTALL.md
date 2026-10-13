@@ -2,11 +2,11 @@
 
 ## Что можно получить из этого архива
 
-Graph, Runtime и Windows собираются отдельно от игры. Host 0.1.3 требует
+Graph, Runtime и Windows собираются отдельно от игры. Host 0.2.0 требует
 локальные BepInEx 5 и Unity Mono. На GOG 1.61 / Unity 2020.3.23f1 / Windows x64
 он пассивно читает стартовую подсказку и при явном включении предоставляет
-ограниченное управление стартовым меню для проверки M1. Проверка NVDA и
-границы — [M1_VERIFICATION.md](M1_VERIFICATION.md). Полное прохождение не готово.
+управление меню, настройками и первым путём до боя M2. Проверка NVDA и
+границы — [M2_VERIFICATION.md](M2_VERIFICATION.md). Полное прохождение не готово.
 Иные отпечатки DLL сохраняют диагностический режим без владения клавишами.
 Для IL2CPP нужен отдельный host; DLL Mono нельзя считать совместимыми.
 
@@ -158,7 +158,7 @@ py -3 .\scripts\inspect_game.py --game-dir "D:\SteamLibrary\steamapps\common\Tai
 `BepInEx/core/0Harmony.dll` и, если присутствует, `UnityEngine.dll`.
 Эти DLL помечены как внешние ссылки и не копируются в пакет.
 Конкретная сборка Unity может потребовать уточнения references после исследования;
-host 0.1.3 скомпилирован с файлами исследованной GOG 1.61 без предупреждений.
+host 0.2.0 скомпилирован с файлами исследованной GOG 1.61 без предупреждений.
 
 Успешная сборка создаёт `artifacts/package/TaintedGrailAccess` с четырьмя
 собственными DLL и `locales/en.properties`, `locales/ru.properties`.
@@ -240,7 +240,7 @@ ExportAssemblyInventory = false
 наблюдение заканчивается после 600 записей. Original input не блокируется,
 игровые действия модом не вызываются. Инструкция и ограничения —
 [DIAGNOSTICS.md](DIAGNOSTICS.md#наблюдение-ввода-стартового-меню-012).
-Для 0.1.3 также обязательны UnityEngine.InputLegacyModule, IMGUIModule,
+Для 0.2.0 также обязательны UnityEngine.InputLegacyModule, IMGUIModule,
 UnityEngine.UI, Unity.TextMeshPro и Rewired_Core. В пакет они не копируются;
 build/deploy сверяют hash. Активный host дополнительно проверяет SHA-256/MVID.
 

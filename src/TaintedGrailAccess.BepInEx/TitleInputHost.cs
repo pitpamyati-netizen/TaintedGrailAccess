@@ -14,7 +14,7 @@ using UnityEngine.UI;
 namespace TaintedGrailAccess.BepInExHost
 {
     /// <summary>
-    /// Fingerprinted title-scene input host. Polls at each input entry before its original,
+    /// Fingerprinted menu/first-path input host. Polls at each input entry before its original,
     /// claims physical presses, and lets original UI calls through an ownership scope.
     /// </summary>
     internal sealed class TitleInputHost : IDisposable
@@ -29,6 +29,9 @@ namespace TaintedGrailAccess.BepInExHost
         private readonly FaultBoundary _faults;
         private readonly PropertyInfo _world;
         private readonly PropertyInfo _discarded;
+        private readonly PropertyInfo _sceneWorld;
+        private readonly PropertyInfo _sceneReady;
+        private readonly PropertyInfo _loaderWorld;
         private readonly FieldInfo _ready;
         private readonly PropertyInfo _player;
         private readonly Type _submit;
@@ -40,6 +43,8 @@ namespace TaintedGrailAccess.BepInExHost
         private readonly object _continueTmp;
         private readonly object _continueLegacy;
         private WeakReference _title;
+        private WeakReference _scene;
+        private WeakReference _loader;
         private int _lastFrame = -1;
         private int _traceCount;
         private bool _disposed;
@@ -63,6 +68,12 @@ namespace TaintedGrailAccess.BepInExHost
             _world = title.GetProperty("World") ?? throw new MissingMemberException(title.FullName, "World");
             _ready = title.GetField("_initialized", BindingFlags.Instance | BindingFlags.NonPublic) ?? throw new MissingFieldException(title.FullName, "_initialized");
             _discarded = world.GetProperty("Discarded") ?? throw new MissingMemberException(world.FullName, "Discarded");
+            var scene = assembly.GetType("Awaken.TG.Main.Scenes.SceneConstructors.BaseScene", true);
+            _sceneWorld = scene.GetProperty("World") ?? throw new MissingMemberException(scene.FullName, "World");
+            _sceneReady = scene.GetProperty("IsInitialized") ?? throw new MissingMemberException(scene.FullName, "IsInitialized");
+            var loader = assembly.GetType("Awaken.TG.Main.UI.RoguePreloader.ScenePreloader", true);
+            _loaderWorld = loader.GetProperty("World", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?? throw new MissingMemberException(loader.FullName, "World");
             _player = assembly.GetType("Awaken.TG.Main.Utility.UI.RewiredHelper", true).GetProperty("Player", BindingFlags.Static | BindingFlags.Public)
                 ?? throw new MissingMemberException("RewiredHelper", "Player");
             _submit = assembly.GetType("Awaken.TG.MVC.UI.Events.UISubmitAction", true);
@@ -74,12 +85,12 @@ namespace TaintedGrailAccess.BepInExHost
             _accept = Enum.Parse(result, "Accept");
             _continueTmp = Enum.Parse(typeof(TMP_InputField).GetNestedType("EditState", BindingFlags.NonPublic), "Continue");
             _continueLegacy = Enum.Parse(typeof(InputField).GetNestedType("EditState", BindingFlags.NonPublic), "Continue");
-            _bindings = new TitleUiBindings(assembly, text, log);
+            _bindings = new TitleUiBindings(assembly, text, log, speech);
             var faults = new FaultBoundary(log);
             _faults = faults;
             var screens = new ScreenManager(faults);
             _bindings.Register(screens);
-            _runtime = new AccessibilityRuntime(screens, new Navigator(speech, text, faults, log), new InputArbitration());
+            _runtime = new AccessibilityRuntime(screens, new Navigator(new FormattedSpeechOutput(speech, _bindings.PlainGameText), text, faults, log), new InputArbitration());
             var gameUi = assembly.GetType("Awaken.TG.MVC.UI.GameUI", true);
             var evt = assembly.GetType("Awaken.TG.MVC.UI.Events.UIEvent", true);
             // Resolve all targets before the first patch; no partially installed ownership.
@@ -88,12 +99,17 @@ namespace TaintedGrailAccess.BepInExHost
                 Target(title, "Start", nameof(BeforeTitle)),
                 Target(title, "OnGUI", nameof(BeforeTitle)),
                 Target(title, "OnDestroy", nameof(DestroyTitle)),
+                Target(scene, "OnGUI", nameof(BeforeScene)),
+                Target(scene, "OnDestroy", nameof(DestroyScene)),
+                Target(loader, "Start", nameof(BeforeLoaderStart)),
+                Target(assembly.GetType("Awaken.TG.Main.UI.TitleScreen.VLoadingScreenUI", true), "Update", nameof(BeforeLoadingUpdate)),
                 Target(gameUi, "PerformGUI", nameof(BeforeGameGui)),
                 Target(gameUi, "HandleKeyDown", nameof(BeforeKey), typeof(Event)),
                 Target(gameUi, "HandleKeyUp", nameof(BeforeKey), typeof(Event)),
                 Target(gameUi, "DeliverReInputEvent", nameof(BeforeRewired), typeof(InputAction), assembly.GetType("Awaken.TG.MVC.UI.Events.UIAction", true)),
                 Target(assembly.GetType("Awaken.TG.MVC.UI.Handlers.Focuses.Focus", true), "BeforeDelivery", nameof(BeforeGameSubmit), evt),
                 Target(assembly.GetType("Awaken.TG.Main.UI.Components.ARButton", true), "Handle", nameof(BeforeGameSubmit), evt),
+                Target(assembly.GetType("Awaken.TG.Main.Classes.VRuneSelection", true), "Handle", nameof(BeforeGameSubmit), evt),
                 Target(typeof(EventSystem), "Update", nameof(BeforeEventSystem)),
                 Target(typeof(StandaloneInputModule), "Process", nameof(BeforeEventSystem)),
                 Target(typeof(Button), "OnSubmit", nameof(BeforeToolkitSubmit), typeof(BaseEventData)),
@@ -108,6 +124,8 @@ namespace TaintedGrailAccess.BepInExHost
             {
                 _owner = this;
                 foreach (var target in targets) _harmony.Patch(target.Item1, prefix: new HarmonyMethod(typeof(TitleInputHost), target.Item2) { priority = Priority.First });
+                _harmony.Patch(TitleUiBindings.RequireMethod(typeof(TMP_InputField), "KeyPressed", typeof(Event)),
+                    postfix: new HarmonyMethod(typeof(TitleInputHost), nameof(AfterTextKey)));
                 Trace("installed; fingerprint matched; scoped title input; no engine Input patches");
             }
             catch { Dispose(); throw; }
@@ -130,9 +148,59 @@ namespace TaintedGrailAccess.BepInExHost
             owner.ReleaseScene();
         }
         private static void BeforeGameGui() { _owner?.Poll("GameUI.PerformGUI"); }
+        private static void BeforeScene(object __instance)
+        {
+            var owner = _owner;
+            if (owner == null || owner._disposed || owner._failed) return;
+            owner._scene = new WeakReference(__instance);
+            owner.Poll("BaseScene.OnGUI");
+        }
+        private static void DestroyScene(object __instance)
+        {
+            var owner = _owner;
+            if (owner == null || owner._scene == null || !ReferenceEquals(owner._scene.Target, __instance)) return;
+            owner._scene = null; owner.ReleaseScene();
+        }
         private static void BeforeEventSystem() { _owner?.Poll("Unity.EventSystem"); }
 
+        private static void BeforeLoaderStart(object __instance)
+        {
+            if (_owner != null) _owner._loader = new WeakReference(__instance);
+        }
+
+        private static bool BeforeLoadingUpdate()
+        {
+            var owner = _owner;
+            if (owner == null) return true;
+            owner.Poll("VLoadingScreenUI.Update");
+            // This exact view polls KeyBindings.Accept directly, outside GameUI delivery.
+            // Reuse live contributor checks, including independent gamepad input.
+            var accept = ReInput.mapping.Actions.FirstOrDefault(action => action.name == "Accept");
+            return accept == null || BeforeRewired(accept, null);
+        }
+
         private object LiveWorld()
+        { return LiveUiWorldSelection.Resolve(LoadingWorld, SceneWorld, TitleWorld); }
+
+        private object LoadingWorld()
+        {
+            var loader = _loader == null ? null : _loader.Target as Behaviour;
+            var loadingWorld = loader == null || !loader.isActiveAndEnabled ? null : _loaderWorld.GetValue(loader);
+            return loadingWorld != null && !(bool)_discarded.GetValue(loadingWorld) && _bindings.HasLoadingScreen(loadingWorld) ? loadingWorld : null;
+        }
+
+        private object SceneWorld()
+        {
+            var scene = _scene == null ? null : _scene.Target as Behaviour;
+            if (scene != null && scene.isActiveAndEnabled && (bool)_sceneReady.GetValue(scene))
+            {
+                var sceneWorld = _sceneWorld.GetValue(scene);
+                if (sceneWorld != null && !(bool)_discarded.GetValue(sceneWorld)) return sceneWorld;
+            }
+            return null;
+        }
+
+        private object TitleWorld()
         {
             var title = _title == null ? null : _title.Target as Behaviour;
             if (title == null || !title.isActiveAndEnabled || !(bool)_ready.GetValue(title)) return null;
@@ -153,7 +221,8 @@ namespace TaintedGrailAccess.BepInExHost
                 _bindings.World = world;
                 var held = Keys.Where(Input.GetKey).Select(key => new HeldKey((int)key, Chord(key, CurrentModifiers()))).ToArray();
                 _gate.Poll(Time.frameCount, (double)Stopwatch.GetTimestamp() / Stopwatch.Frequency, Application.isFocused, held, _runtime,
-                    () => _faults.Read("title.input-capture", _bindings.Capturing, true));
+                    () => _faults.Read("title.input-capture", _bindings.Capturing, true),
+                    chord => _faults.Read("text.native-command", () => _bindings.NativeTextInput(chord), true));
                 var snapshot = string.Join(",", held.Select(key => key.PhysicalKey + ":" + key.Chord.Modifiers)) +
                     "; raw=" + _runtime.Input.RawCapture + "; focus=" + _runtime.Navigator.HasFocus;
                 if (snapshot != _lastSnapshot)
@@ -167,12 +236,17 @@ namespace TaintedGrailAccess.BepInExHost
         }
         private void ReleaseScene()
         {
-            _gate.Release();
+            // Both title and gameplay scenes are supported now. A consumed held Enter must
+            // remain owned until release while their controllers are being replaced.
+            _gate.Blur();
             _runtime.Input.Release();
             _runtime.Screens.Clear();
             _runtime.Navigator.Attach(null);
             _bindings.HelpOpen = false;
+            _bindings.ClearTextFeedback();
+            _bindings.ClearAuxiliaryText();
             _lastSnapshot = null;
+            _lastFrame = -1;
         }
         private void Fail(Exception error)
         {
@@ -281,8 +355,21 @@ namespace TaintedGrailAccess.BepInExHost
             if (!owner.Suppress(new KeyChord(UiKey.None))) return true;
             __result = true; return false;
         }
-        private static bool BeforeTmpKey(Event __0, ref object __result)
-        { return BeforeTextKey(__0, ref __result, true); }
+        private static bool BeforeTmpKey(TMP_InputField __instance, Event __0, ref object __result)
+        {
+            return BeforeTextKey(__0, ref __result, true);
+        }
+        private static void AfterTextKey() { _owner?.ObserveText(); }
+        private bool WithWorld(Func<bool> action)
+        {
+            if (_disposed || _failed || !Application.isFocused) return false;
+            // Nested editor callbacks borrow the existing callback scope without clearing it.
+            if (_bindings.World != null) return action();
+            try { _bindings.World = LiveWorld(); return _bindings.World != null && action(); }
+            catch (Exception error) { _faults.Report("text.native", error); return false; }
+            finally { _bindings.World = null; }
+        }
+        public void ObserveText() { WithWorld(() => { _bindings.ObserveText(); _bindings.ObserveAuxiliaryText(); return true; }); }
         private static bool BeforeLegacyKey(Event __0, ref object __result)
         { return BeforeTextKey(__0, ref __result, false); }
         private static bool BeforeTextKey(Event evt, ref object result, bool tmp)
@@ -323,12 +410,12 @@ namespace TaintedGrailAccess.BepInExHost
             if (_traceCount++ < 600) _log.Write("input.host", "frame=" + Time.frameCount + "; " + message);
         }
         public void OnWindowFocusChanged(bool focused)
-        { if (!focused) { _gate.Blur(); _runtime.Input.Release(); } }
+        { if (!focused) { _gate.Blur(); _runtime.Input.Release(); _bindings.ClearTextFeedback(); } }
         public void Dispose()
         {
             if (_disposed) return;
             _disposed = true;
-            _bindings.World = null; _title = null; _gate.Release();
+            _bindings.World = null; _title = null; _scene = null; _loader = null; _gate.Release();
             if (ReferenceEquals(_owner, this)) _owner = null;
             try { _harmony.UnpatchSelf(); } finally { _runtime.Dispose(); }
         }

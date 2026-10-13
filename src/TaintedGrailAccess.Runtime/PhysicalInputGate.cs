@@ -11,6 +11,7 @@ namespace TaintedGrailAccess.Runtime
     public sealed class PhysicalInputGate
     {
         private readonly KeyboardSnapshotTracker _tracker = new KeyboardSnapshotTracker();
+        private readonly KeyboardSnapshotTracker _textTracker = new KeyboardSnapshotTracker();
         private readonly Dictionary<int, KeyChord> _owned = new Dictionary<int, KeyChord>();
         private readonly HashSet<KeyChord> _claims = new HashSet<KeyChord>();
         private long _frame = long.MinValue;
@@ -20,12 +21,14 @@ namespace TaintedGrailAccess.Runtime
 
         /// <summary>Polls once before any game input path; liveCapture is re-read after actions.</summary>
         public void Poll(long frame, double time, bool focused, IEnumerable<HeldKey> snapshot,
-            AccessibilityRuntime runtime, Func<bool> liveCapture)
+            AccessibilityRuntime runtime, Func<bool> liveCapture, Func<KeyChord, bool> nativeTextInput = null)
         {
             if (frame == _frame) return;
             var held = snapshot.ToArray();
             bool capture = liveCapture();
             var chords = _tracker.Sample(frame, time, focused, capture, held);
+            var textChords = _textTracker.Sample(frame, time, focused, !capture || nativeTextInput == null, held)
+                .Where(chord => chord.Modifiers == Modifiers.Control && (chord.Key == UiKey.F1 || chord.Key == UiKey.Enter));
             _frame = frame;
             _focused = focused;
             _claims.Clear();
@@ -44,7 +47,7 @@ namespace TaintedGrailAccess.Runtime
                 { _claims.Add(pair.Value); _owned.Remove(pair.Key); }
                 else if (present.Chord.Equals(pair.Value)) _claims.Add(pair.Value);
             }
-            runtime.UpdateLive(frame, chords, liveCapture);
+            runtime.UpdateLive(frame, chords.Concat(textChords), liveCapture, nativeTextInput);
             foreach (var key in held)
                 if (runtime.Input.IsClaimed(key.Chord))
                 { _owned[key.PhysicalKey] = key.Chord; _claims.Add(key.Chord); }
@@ -67,7 +70,7 @@ namespace TaintedGrailAccess.Runtime
 
         /// <summary>Blur clears frame claims; a previously consumed held press still waits for release.</summary>
         public void Blur()
-        { _focused = false; _claims.Clear(); _exclusive = false; _tracker.Reset(); _frame = long.MinValue; }
+        { _focused = false; _claims.Clear(); _exclusive = false; _tracker.Reset(); _textTracker.Reset(); _frame = long.MinValue; }
 
         /// <summary>Disabling or leaving the supported scene returns all keys to the game.</summary>
         public void Release()

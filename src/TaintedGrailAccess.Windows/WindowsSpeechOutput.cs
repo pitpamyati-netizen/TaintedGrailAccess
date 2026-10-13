@@ -10,7 +10,7 @@ namespace TaintedGrailAccess.Windows
     /// coalescing and announce-once; this class preserves the interrupt/queue request.
     /// A transcript entry means "requested", never proof that sound was audible.
     /// </summary>
-    public sealed class WindowsSpeechOutput : ISpeechOutput, IDisposable
+    public sealed class WindowsSpeechOutput : IPrivateSpeechOutput, IDisposable
     {
         private readonly IRuntimeLog _log;
         private readonly int _ownerThread;
@@ -53,9 +53,16 @@ namespace TaintedGrailAccess.Windows
         }
 
         public void Speak(string text, bool interrupt)
+        { SpeakCore(text, interrupt, false); }
+
+        /// <summary>Delivers user-entered text without putting its characters in diagnostics.</summary>
+        public void SpeakPrivate(string text, bool interrupt)
+        { SpeakCore(text, interrupt, true); }
+
+        private void SpeakCore(string text, bool interrupt, bool privateContent)
         {
             if (string.IsNullOrWhiteSpace(text)) return;
-            SafeLog(interrupt ? "speech.request.interrupt" : "speech.request.queue", text);
+            SafeLog(interrupt ? "speech.request.interrupt" : "speech.request.queue", privateContent ? "[private editable content]" : text);
             if (!OnOwnerThread()) return;
             while (_backend != null)
             {
@@ -67,12 +74,14 @@ namespace TaintedGrailAccess.Windows
                 }
                 catch (Exception exception)
                 {
-                    Report("output:" + _backend.Name + ":" + exception.GetType().FullName, exception.Message);
+                    Report("output:" + _backend.Name + ":" + exception.GetType().FullName,
+                        privateContent ? "Private text output failed: " + exception.GetType().Name : exception.Message);
                     ReleaseBackend();
                     ActivateNext();
                 }
             }
-            Report("unavailable", "Speech is unavailable; the requested text was written to the transcript.");
+            Report("unavailable", privateContent ? "Speech is unavailable; editable content is excluded from diagnostics."
+                : "Speech is unavailable; the requested text was written to the transcript.");
         }
 
         public void Stop()

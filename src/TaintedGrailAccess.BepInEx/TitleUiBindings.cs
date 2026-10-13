@@ -12,8 +12,8 @@ using UnityEngine.UI;
 
 namespace TaintedGrailAccess.BepInExHost
 {
-    /// <summary>Live recipes for the small title/settings path used to verify input ownership.</summary>
-    internal sealed class TitleUiBindings
+    /// <summary>Live recipes for menus, settings and the first path through tutorial entry.</summary>
+    internal sealed partial class TitleUiBindings
     {
         private readonly Dictionary<string, Type> _types = new Dictionary<string, Type>();
         private readonly Dictionary<string, FieldInfo> _fields = new Dictionary<string, FieldInfo>();
@@ -21,6 +21,7 @@ namespace TaintedGrailAccess.BepInExHost
         private readonly Dictionary<string, MethodInfo> _find = new Dictionary<string, MethodInfo>();
         private readonly Localizer _text;
         private readonly IRuntimeLog _log;
+        private readonly ISpeechOutput _speech;
         private readonly MethodInfo _buttonHandle;
         private readonly MethodInfo _closeSettings;
         private readonly MethodInfo _getLayers;
@@ -33,9 +34,9 @@ namespace TaintedGrailAccess.BepInExHost
         public object World { get; set; }
         public bool HelpOpen { get; set; }
 
-        public TitleUiBindings(Assembly assembly, Localizer text, IRuntimeLog log)
+        public TitleUiBindings(Assembly assembly, Localizer text, IRuntimeLog log, ISpeechOutput speech)
         {
-            _text = text; _log = log;
+            _text = text; _log = log; _speech = speech == null ? null : new FormattedSpeechOutput(speech, PlainGameText);
             AddType(assembly, "model", "Awaken.TG.MVC.Model");
             AddType(assembly, "menu", "Awaken.TG.Main.UI.TitleScreen.TitleScreenUI");
             AddType(assembly, "menuView", "Awaken.TG.Main.UI.TitleScreen.VTitleScreenRogueUI");
@@ -89,11 +90,19 @@ namespace TaintedGrailAccess.BepInExHost
             _buttonHandle = RequireMethod(_types["button"], "Handle", evt);
             _closeSettings = RequireMethod(_types["settings"], "Close");
             _submit = Activator.CreateInstance(assembly.GetType("Awaken.TG.MVC.UI.Events.UISubmitAction", true));
+            InitializeSettings(assembly);
+            InitializePath(assembly);
+            InitializeGameText(assembly);
+            InitializeText();
         }
 
         public void Register(ScreenManager screens)
         {
             screens.Register(new Recipe(this, "menu", 0));
+            foreach (var kind in PathScreens) screens.Register(new Recipe(this, kind,
+                kind == "tutorial" ? 1 : kind == "mode" ? 4 : kind == "class" ? 6 : kind == "run" ? 7 :
+                kind == "fightEntry" ? 8 : kind == "story" ? 9 : kind == "slots" ? 12 : kind == "creator" ? 13 :
+                kind == "video" ? 18 : kind == "loading" ? 25 : 19));
             screens.Register(new Recipe(this, "settings", 10));
             screens.Register(new Recipe(this, "consent", 20));
             screens.Register(new Recipe(this, "popup", 30));
@@ -149,6 +158,8 @@ namespace TaintedGrailAccess.BepInExHost
         }
         private object TopLayerModel()
         {
+            // ScenePreloader owns just LoadingScreenUI and has no shortcut/menu services.
+            if (HasLoadingScreen(World)) return null;
             var services = _properties["world.Services"].GetValue(World);
             var layers = _getLayers.Invoke(services, null);
             return ReadProp("layer", "Model", ReadProp("layerStack", "TopLayer", layers));
@@ -159,6 +170,7 @@ namespace TaintedGrailAccess.BepInExHost
             if (kind == "help") return HelpOpen;
             if (kind == "raw") return RawView() != null;
             if (kind == "unmapped") return UnsupportedModal();
+            if (PathScreens.Contains(kind)) return PathActive(kind);
             var view = View(kind);
             if (view == null || !_types[kind + "View"].IsInstanceOfType(view)) return false;
             if (kind == "menu")
@@ -173,13 +185,17 @@ namespace TaintedGrailAccess.BepInExHost
         {
             if (World == null) return false;
             var top = TopLayerModel();
-            return top != null && !new[] { "menu", "settings", "consent", "popup", "bug" }.Any(kind => ReferenceEquals(top, Find(kind)));
+            return top != null && !new[] { "menu", "settings", "consent", "popup", "bug" }.Concat(PathScreens.Where(k => k != "tutorial")).Any(kind => ReferenceEquals(top, Find(kind)))
+                && !All("storyOnTop").Any(model => ReferenceEquals(model, top));
         }
         private bool CanAct(string kind)
         {
-            if (!Active(kind) || Capturing() || HelpOpen) return false;
+            if (!Active(kind) || Capturing() || HelpOpen || _actionScreen != kind) return false;
+            if (kind == "loading") return View("popup") == null && View("settings") == null;
             var top = TopLayerModel();
-            return (top == null || ReferenceEquals(top, Find(kind))) &&
+            return (top == null || ReferenceEquals(top, Find(kind)) ||
+                (kind == "run" && ReferenceEquals(top, Find("class"))) ||
+                (kind == "story" && All("storyOnTop").Any(model => ReferenceEquals(model, top)))) &&
                 (kind != "menu" || (View("settings") == null && View("consent") == null && View("popup") == null)) &&
                 (kind != "settings" || View("popup") == null);
         }
@@ -189,6 +205,7 @@ namespace TaintedGrailAccess.BepInExHost
         {
             if (!Active(kind)) return;
             if (kind == "raw" || kind == "unmapped") return;
+            if (BuildPath(kind, builder)) return;
             if (kind == "help")
             {
                 builder.Add(ControlId.Structural("help.text"), new NodeVtable(new NodeAnnouncement(() => _text.Get("input.help.text"))));
@@ -215,42 +232,9 @@ namespace TaintedGrailAccess.BepInExHost
                         { OnActivate = () => { if (CanAct(kind) && Actionable(button) && button.IsInteractable()) Invoke("tab." + name, () => button.OnSubmit(new BaseEventData(EventSystem.current))); } });
                 }
                 builder.BeginStop("values");
+                var visited = new HashSet<object>();
                 foreach (Component setting in (IEnumerable)ReadField("settings", "_spawnedSettings", model))
-                {
-                    if (!Visible(setting)) continue;
-                    if (_types["toggle"].IsInstanceOfType(setting))
-                    {
-                        var toggle = (Toggle)ReadField("toggle", "toggle", setting);
-                        var label = (TextMeshProUGUI)ReadField("toggle", "displayName", setting);
-                        var option = ReadField("toggle", "_option", setting);
-                        if (!Visible(label) || !Visible(toggle) || option == null) continue;
-                        Func<string> state = () => _text.Get(toggle.isOn ? "state.on" : "state.off");
-                        builder.Add(ControlId.ForObject(option), new NodeVtable(new NodeAnnouncement(() => label.text, "label"),
-                            new NodeAnnouncement(() => _text.Get("role.toggle"), "role"), new NodeAnnouncement(state, "value", true))
-                            { OnActivate = () => ActivateToggle(kind, toggle), StateText = state });
-                    }
-                    else if (_types["keybinding"].IsInstanceOfType(setting))
-                    {
-                        var label = (TextMeshProUGUI)ReadField("keybinding", "displayName", setting);
-                        var binding = (TextMeshProUGUI)ReadField("keybinding", "binding", setting);
-                        var button = (Component)ReadField("keybinding", "button", setting);
-                        var option = ReadProp("keybinding", "Option", setting);
-                        if (!Visible(label) || !Visible(button) || option == null) continue;
-                        builder.Add(ControlId.ForObject(option), new NodeVtable(new NodeAnnouncement(() => label.text, "label"),
-                            new NodeAnnouncement(() => Visible(binding) ? binding.text : null, "value", true))
-                            { OnActivate = () => ActivateButton(kind, button, "settings.keybinding") });
-                    }
-                    else if (_types["optionButton"].IsInstanceOfType(setting))
-                    {
-                        var label = (TextMeshProUGUI)ReadField("optionButton", "displayName", setting);
-                        var button = (Component)ReadField("optionButton", "button", setting);
-                        var option = ReadField("optionButton", "_option", setting);
-                        if (!Visible(label) || !Visible(button) || option == null) continue;
-                        builder.Add(ControlId.ForObject(option), new NodeVtable(new NodeAnnouncement(() => label.text, "label"),
-                            new NodeAnnouncement(() => _text.Get("role.button"), "role"))
-                            { OnActivate = () => ActivateButton(kind, button, "settings.optionButton") });
-                    }
-                }
+                    BuildSetting(builder, setting, visited);
                 builder.BeginStop("commands");
                 Buttons(builder, kind, view, new[] { "apply", "cancel", "restoreDefaults" });
                 return;
@@ -260,24 +244,7 @@ namespace TaintedGrailAccess.BepInExHost
                 foreach (var name in new[] { "title", "description" })
                 {
                     var field = (TMP_InputField)ReadField("bugView", name, view);
-                    if (!Visible(field)) continue;
-                    builder.Add(ControlId.Referenced(model, "bug." + name), new NodeVtable(
-                        new NodeAnnouncement(() => _text.Get("text." + name), "label"),
-                        new NodeAnnouncement(() => _text.Get("role.textField"), "role"))
-                        { OnActivate = () =>
-                        {
-                            if (!CanAct(kind) || !Actionable(field) || !field.IsInteractable()) return;
-                            var events = EventSystem.current;
-                            if (events == null || !events.isActiveAndEnabled) return;
-                            // Native selection is used only to give this genuine editor its
-                            // keyboard events; the graph's cursor remains independent.
-                            Invoke("bug.textEntry", () =>
-                            {
-                                events.SetSelectedGameObject(field.gameObject);
-                                field.OnPointerClick(new PointerEventData(events) { button = PointerEventData.InputButton.Left });
-                            });
-                            _pendingTextFrame = Time.frameCount;
-                        }, StateText = () => field.isFocused || _pendingTextFrame == Time.frameCount ? _text.Get("text.editing") : null });
+                    AddTextField(builder, kind, field, ControlId.Referenced(model, "bug." + name), "text." + name);
                 }
                 Buttons(builder, kind, view, new[] { "closeButton" });
                 return;
@@ -291,7 +258,7 @@ namespace TaintedGrailAccess.BepInExHost
                     var parent = (Transform)ReadField("popupView", "buttonParent", view);
                     foreach (var button in parent.GetComponentsInChildren(_types["button"], false)) AddButton(builder, kind, button, ControlId.ForObject(button), "popup.choice");
                 }
-                else Buttons(builder, kind, view, new[] { "cancel", "accept" });
+                else { ConsentLinks(builder, view); Buttons(builder, kind, view, new[] { "cancel", "accept" }); }
                 return;
             }
             Buttons(builder, kind, view, new[] { "startGame", "continueGame", "switchSaveSlot", "journal", "options", "leaderboards", "exitGame" });
@@ -305,8 +272,10 @@ namespace TaintedGrailAccess.BepInExHost
         {
             if (!Visible(button)) return;
             var label = button.GetComponentsInChildren<TextMeshProUGUI>(false).FirstOrDefault(Visible);
-            if (label == null || string.IsNullOrWhiteSpace(label.text)) return;
-            builder.Add(id, new NodeVtable(new NodeAnnouncement(() => Visible(label) ? label.text : null, "label"),
+            string labelKey;
+            ButtonLabels.TryGetValue(actionId, out labelKey);
+            if ((label == null || string.IsNullOrWhiteSpace(label.text)) && labelKey == null) return;
+            builder.Add(id, new NodeVtable(new NodeAnnouncement(() => Visible(label) && !string.IsNullOrWhiteSpace(label.text) ? label.text : labelKey == null ? null : _text.Get(labelKey), "label"),
                 new NodeAnnouncement(() => _text.Get("role.button"), "role"),
                 new NodeAnnouncement(() => ((Selectable)button).IsInteractable() ? null : _text.Get("state.disabled"), "enabled", true))
                 { OnActivate = () => ActivateButton(kind, button, actionId) });
@@ -333,6 +302,7 @@ namespace TaintedGrailAccess.BepInExHost
         private bool Back(string kind)
         {
             if (kind == "help") { HelpOpen = false; return true; }
+            if (PathBack(kind)) return true;
             if (kind != "settings" || !CanAct(kind)) return false;
             Invoke("settings.back", () => _closeSettings.Invoke(Find("settings"), null));
             return true;
@@ -384,7 +354,10 @@ namespace TaintedGrailAccess.BepInExHost
             public override string ScreenName => _owner._text.Get("screen." + _kind);
             public override int Layer => _layer;
             public override bool Exclusive => _kind == "help";
-            public override bool CapturesRawInput => _kind == "raw" || _kind == "unmapped";
+            public override bool CapturesRawInput => _kind == "raw" || _kind == "unmapped" || _kind == "video";
+            public override bool StartUnfocused => _kind == "tutorial" || _kind == "fightEntry";
+            public override void OnFocus() { _owner._actionScreen = _kind; }
+            public override void OnUnfocus() { if (_owner._actionScreen == _kind) _owner._actionScreen = null; }
             public override bool IsActive() => _owner.Active(_kind);
             public override void Build(GraphBuilder builder) => _owner.Build(_kind, builder);
             public override bool OnBack() => _owner.Back(_kind);

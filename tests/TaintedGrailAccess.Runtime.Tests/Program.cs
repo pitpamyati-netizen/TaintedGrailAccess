@@ -12,6 +12,20 @@ namespace TaintedGrailAccess.Runtime.Tests
     {
         private static readonly List<(string Name, Action Test)> Cases = new List<(string, Action)>
         {
+            ("game_speech_visible_markup_is_plain", FormattedSpeechTests.VisibleFormatting),
+            ("game_speech_icons_keep_semantic_labels", FormattedSpeechTests.IconsKeepMeaning),
+            ("game_speech_private_content_remains_literal", FormattedSpeechTests.PrivateContentIsLiteral),
+            ("game_speech_private_content_has_no_ordinary_fallback", FormattedSpeechTests.PrivateContentNeverFallsBack),
+            ("text_native_actual_insert_delete_space", TextEditFeedbackTests.ActualEdits),
+            ("text_native_paste_replace_and_duplicate_observation", TextEditFeedbackTests.PasteAndReplacement),
+            ("text_native_selection_caret_and_explicit_read", TextEditFeedbackTests.SelectionAndCaret),
+            ("text_native_blur_field_change_and_empty", TextEditFeedbackTests.ResetAndFieldChange),
+            ("text_native_password_never_echoes", TextEditFeedbackTests.Passwords),
+            ("text_native_unicode_and_invalid_selection", TextEditFeedbackTests.UnicodeAndInvalidSelection),
+            ("physical_native_text_read_and_finish_own_only_reserved_chords", PhysicalInputTests.NativeTextCommands),
+            ("physical_native_raw_and_window_return_do_not_replay", PhysicalInputTests.NativeCaptureCommandsStandDown),
+            ("physical_scene_replacement_retains_consumed_press", PhysicalInputTests.SceneReplacementRetainsConsumedPress),
+            ("loading_overlay_owns_ready_additive_scene", PhysicalInputTests.LoadingOverlayOwnsReadyScene),
             ("initial_screen_and_focus_are_queued_once", InitialQueuedOnce),
             ("direct_focus_interrupts_without_differ_duplicate", DirectLandingOnce),
             ("programmatic_landing_queues_once", SuggestedLandingQueues),

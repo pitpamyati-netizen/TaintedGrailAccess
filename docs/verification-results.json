@@ -9,7 +9,7 @@
   "production_target": "netstandard2.0",
   "test_runtime": "8.0.20",
   "game_tested": true,
-  "game_test_scope": "0.1.3 inspected title scene: menu/settings, hold/repeat/Alt+Tab, help, keybinding cancel, popup, native TMP capture/typing/deletion/escape and passive-mode restore; text echo and full gameplay not accepted",
+  "game_test_scope": "GOG 1.61: M1 menus/input plus M2 slider, spoken native editing and independent new-hero/tutorial/dialogue/class path to first combat; combat actions are M3",
   "native_speech_tested": true,
   "native_speech_scope": "NVDA heard by blind user; other backends and full gameplay not accepted",
   "historical_game_validation": {
@@ -29,7 +29,7 @@
     "unity_version": "2020.3.23f1",
     "backend": "Mono",
     "loader": "BepInEx 5.4.23.5",
-    "plugin": "0.1.3",
+    "plugin": "0.2.0",
     "architecture": "x64",
     "build_id": "59087960036481007",
     "application_version": "1.61",
@@ -47,10 +47,18 @@
       "keybinding-cancel",
       "popup-no-return",
       "disabled-host-passive-mode",
-      "native-tmp-focused-selected-typing-deletion-and-escape"
+      "native-tmp-focused-selected-typing-deletion-and-escape",
+      "original-slider-adjustment",
+      "native-text-read-selection-finish",
+      "new-hero-creation",
+      "separate-loading-scene-confirmation",
+      "initial-popup-story-and-wait-confirmation",
+      "available-class-and-starting-passive-selection",
+      "new-run-start",
+      "first-combat-entry"
     ],
     "portable_tested": true,
-    "full_path_accepted": false,
+    "full_path_accepted": true,
     "implemented": [
       "passive-start-prompt",
       "exact-game-and-input-dependency-fingerprint-guards",
@@ -63,7 +71,17 @@
       "raw-and-real-text-stand-down",
       "title-settings-toggle-keybinding-popup-adapters",
       "live-non-main-view-selection",
-      "scene-exit-input-release"
+      "scene-exit-input-release",
+      "settings-sliders-enum-dependent-link-adapters",
+      "native-text-edit-feedback-private-read-and-finish",
+      "visible-consent-text-and-original-link-accept-cancel",
+      "mode-save-slot-hero-creation-adapters",
+      "live-preloader-world-priority-and-original-loading-confirmation",
+      "visible-popup-story-choices-and-original-wait-confirmation",
+      "class-passive-available-difficulty-and-new-run-adapters",
+      "visible-tutorial-text-and-subtitles",
+      "first-combat-entry-without-combat-actions",
+      "spoken-game-formatting-with-live-input-icon-labels"
     ],
     "compiled_with_game": true,
     "blind_user_accepted": [
@@ -73,17 +91,25 @@
       "help-and-return",
       "keybinding-cancel",
       "popup-no-return",
-      "native-text-no-graph-navigation-and-escape"
+      "native-text-no-graph-navigation-and-escape",
+      "settings-audio-slider",
+      "native-text-typing-deletion-selection-read-finish",
+      "independent-new-hero-tutorial-dialogue-class-to-first-combat-path"
     ],
     "game_actions_enabled": true,
     "m1_accepted": true,
-    "game_action_scope": "Explicit EnableTitleInput, inspected title scene and original UI handlers; unbound example remains disabled",
+    "game_action_scope": "Explicit EnableTitleInput, exact fingerprints, live menu/loading/initial-story/run UI and original handlers; unbound example remains disabled",
     "pending": [],
     "limitations": [
-      "native-text-character-echo-and-spoken-editing-not-implemented-M2",
-      "full-gameplay-M2-to-M6-not-accepted",
-      "gamepad-other-builds-and-other-speech-backends-not-accepted"
-    ]
+      "saved-consent-not-reset-and-TOS-not-repeated-in-game",
+      "resolution-change-and-every-settings-list-variant-not-individually-live-tested",
+      "final-formatting-cleanup-portable-and-compiled-not-separately-NVDA-retested",
+      "combat-exploration-full-run-M3-to-M6-not-implemented-or-accepted",
+      "gamepad-other-builds-modes-and-other-speech-backends-not-accepted"
+    ],
+    "full_path_scope": "M2 first path from title/new game through tutorial to first combat entry only",
+    "full_gameplay_accepted": false,
+    "m2_accepted": true
   },
   "results": [
     {
@@ -95,11 +121,11 @@
     {
       "failed": 0,
       "project": "Runtime",
-      "passed": 53,
+      "passed": 67,
       "phase": "run"
     },
     {
-      "assertions": 15,
+      "assertions": 18,
       "project": "Windows",
       "failed": 0,
       "phase": "run"
@@ -117,16 +143,17 @@
       "exit_code": 0
     },
     {
-      "project": "Deployment 0.1.3",
+      "project": "Deployment 0.2.0",
       "phase": "installed-and-game-run",
       "tested": true,
-      "backup_verified": true
+      "backup_verified": true,
+      "scope": "Reversible deployment, hash comparison and user-led first-path acceptance; final text-formatting cleanup not separately live-replayed"
     },
     {
       "project": "BindingChecks",
       "phase": "metadata-with-game",
       "exit_code": 0,
-      "scope": "Exact TitleUiBindings constructor resolved; no Unity objects, patches or game actions"
+      "scope": "Exact menu/settings/preloader/story/run/text-mapping binding metadata resolved; no Unity objects, patches or game actions"
     }
   ]
 }

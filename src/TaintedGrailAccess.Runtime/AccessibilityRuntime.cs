@@ -17,7 +17,7 @@ namespace TaintedGrailAccess.Runtime
         { UpdateLive(frame, chords, () => realTextFieldActive); }
 
         /// <summary>Re-reads raw/text ownership after each action, including synchronous dialogs.</summary>
-        public void UpdateLive(long frame, IEnumerable<KeyChord> chords, Func<bool> liveCapture)
+        public void UpdateLive(long frame, IEnumerable<KeyChord> chords, Func<bool> liveCapture, Func<KeyChord, bool> nativeTextInput = null)
         {
             Screens.Settle();
             // OnUpdate can open a dialog. Observe it before the first key action.
@@ -31,8 +31,13 @@ namespace TaintedGrailAccess.Runtime
             foreach (var chord in chords)
             {
                 bool consumed;
-                using (Input.EnterOwnAction()) consumed = Navigator.Handle(chord);
-                if (consumed) Input.Claim(chord);
+                bool nativeConsumed;
+                using (Input.EnterOwnAction())
+                {
+                    nativeConsumed = Navigator.HandleNativeTextInput(chord, nativeTextInput);
+                    consumed = nativeConsumed || Navigator.Handle(chord);
+                }
+                if (consumed) Input.Claim(chord, nativeConsumed);
                 // An action may synchronously replace the screen or open a modal.
                 Screens.Settle(false);
                 Navigator.RealTextFieldActive = liveCapture();

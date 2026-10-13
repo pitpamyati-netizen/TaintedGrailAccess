@@ -4,6 +4,117 @@
 [источник и условия](research/template-import.md).
 Метод исследования — [GAME_DISCOVERY.md](GAME_DISCOVERY.md).
 
+## M2: новые статические привязки, 13 октября 2026
+
+Повторный inventory GOG 1.61 подтвердил прежний SHA-256 TG.Main; конструктор
+всех новых привязок прошёл BindingChecks с настоящими DLL. Это проверка
+метаданных и сборки. Ползунок и текстовый редактор затем проверены в игре с NVDA;
+после исправления перехода пользователь самостоятельно дошёл до первого боя.
+
+- `VSlider.displayText/slider/selectable/_option`, `private void MoveSlider(float)`:
+  исходный Handle(UINaviAction) вызывает именно MoveSlider; шаг игры — 0.1
+  диапазона, clamp/wholeNumbers/listeners выполняет Unity Slider. Мод вызывает
+  этот handler, не присваивает SliderOption.Value самостоятельно.
+- `VEnumArrows.settingNameText/optionNameText/leftButton/rightButton/_option`:
+  ARButton.OnClick вызывает PreviousOption/NextOption; край и запрещённые варианты
+  определяет EnumArrowsOption. Циклического перехода нет.
+- `VDependentOption._baseOptionView/_otherOptionsViews/_option` и
+  `DependentOption.ShowDependent`: вложенные живые view существуют только при
+  включённой базе. Чтение не раскрывает OtherOptions из невидимого шаблона.
+- `PrefOption.ID/TooltipConstructor`, VLinkOption.displayName/button/_option:
+  стабильный ID опции, локализованные tooltip и штатный callback ссылки.
+- `BaseScene.World/IsInitialized`, private `OnGUI()/OnDestroy()`:
+  OnGUI вызывает GameUI.PerformGUI после IsInitialized. Слабая ссылка на
+  контроллер позволяет получить текущий World; UI-ссылки освобождаются в callback.
+- TitleScreenGameModes/VTitleScreenGameMode, LoadSaveUI/VLoadSaveUI/SaveSlotUI,
+  PatchNotesUI/VPatchNotesUI, WelcomePopupUI/VWelcomePopupUI: штатные кнопки
+  входа/возврата/выбора ячейки; удаление по-прежнему проходит отдельное PopupUI.
+- HeroCreatorUI/VHeroCreatorButtons и GenderUI/VGenderUI.heroNameField:
+  новая пустая ячейка требует создания героя и имени перед обучением. Кнопки
+  accept/close и SetSelectedGameObject→TMP_InputField.OnPointerClick используют
+  оригинальный поток; не записываются имя и содержимое редактора.
+- ClassSelection.Visible, VRuneSelection.IsInitialized/IsUnlocked/Interactable,
+  Handle(UIEvent): UISubmitAction вызывает RuneSelection.Select; NewRunSelection
+  и VNewRunSelection читают текущие тексты класса, умения и сложности. Кнопки
+  start/changeClass/lower/increase вызывают оригинальные обработчики.
+- Story.VStoryPanel/VStartStoryPanel, VChoice.choiceButton и VStartStoryChoice:
+  текст берётся из живого storyParent/choicesParent, действие — ARButton.Handle,
+  причина недоступности — уже отрисованный additionalText. Будущие графы истории
+  не читаются. VChoice прикрепляет callback с задержкой 0.5 с; активация разрешена
+  только после наличия собственного Action в ARButton.OnClick (точный backing field).
+- VSmartText.textMesh/bigTextMesh на реальном ViewHosting.OnHUD(string[]) и
+  VVideoSubtitles.text: только отрисованная текущая подсказка/субтитр. VCAccessibility
+  меняет шрифты, собственного речевого канала игры не найдено.
+- FightBoard.IsFightStarted/IsFightOver обозначают вход в бой; управление картами
+  не относится к M2. Наличие FightBoard до появления Round не считается стартом.
+- TitlePopupUI.LinkClicked(string) вызывает Application.OpenURL. Читаются
+  реально отрисованные TMP links и текст решения; согласие автоматически не даётся.
+- TMP_InputField.selectionStringAnchorPosition/selectionStringFocusPosition/text:
+  снимок после native KeyPressed и LateUpdate даёт фактическую правку/курсор.
+  Ctrl+F1 читает текст, Ctrl+Enter завершает через оригинальный
+  EventSystem.SetSelectedGameObject(null)→OnDeselect; повтор и открывающий Enter
+  сохраняют ownership. Частная речь исключает содержимое из transcript.
+
+Все новые game members — TG.Main с SHA-256/MVID раздела профиля ниже;
+text/editor — Unity.TextMeshPro с точным профилем из InspectedGameBuild.
+Подробная проверка и границы — в [M2_VERIFICATION.md](M2_VERIFICATION.md).
+В игре подтверждены MoveSlider, создание героя и native текст. Первая сборка
+после перехода в BaseScene не находила доступного экрана. Диагностика использует
+точный `World.AllInOrder()` без параметров: `World.All<Model>()` здесь не включает
+все модели, поскольку Register добавляет только ModelUtils.ImplementedTypes.
+Пишутся только типы view и результат видимости; личные тексты не экспортируются.
+
+Причина остановки установлена по live журналу и точным обработчикам:
+`ScenePreloader.Start/InitWorld` создаёт собственный World, его приватное
+свойство World и слабая ссылка на ScenePreloader подключаются отдельно.
+`LoadingScreenUI` остаётся в этом World при additive загрузке основной сцены.
+`Scenario.RunInitialStory` ждёт SceneInitializationHandle.OnInitialized;
+`Tutorial Scene Initialization` завершается только по подтверждению игрока.
+`VLoadingScreenUI.hintMessage/firstGameText/firstGameMessage/waitForInput`
+показывают сообщение/готовность; `WaitForInputEnabled` запрещает раннее действие.
+`VLoadingScreenUI.Handle(UIEvent)` для UIEMouseDown завершает последовательность
+и вызывает `CompleteTutorialLoading`. UIEMouseDown имеет публичный пустой
+constructor, а этот Handle не читает координаты, GameUI или Position. Мод
+вызывает его после готовности и появления подсказки, не завершает загрузку сам.
+LiveWorld сначала выбирает видимое загрузочное окно промежуточной сцены.
+В ней нет ShortcutsLayerStack/GameUI, поэтому обычные сервисы меню не запрашиваются.
+Тот же VLoadingScreenUI.Update напрямую опрашивает `KeyBindings.Accept = "Accept"`;
+узкий prefix подавляет только его Update в кадре присвоенного физического
+источника Accept, с теми же проверками независимого контроллера, что Rewired.
+
+Начальная история использует `VBigPopupUI : VPopupUI : View<IStoryApi>`,
+а не VStoryPanel. `VPopupUI.titleText/parent/buttonParent` содержат только
+уже отрисованный текст и ARButton; OfferChoice прикрепляет исходный callback.
+Этот вариант теперь входит в живой Story adapter и пройден пользователем с NVDA.
+
+Живой переход через загрузку и начальная история теперь читаются; пользователь
+дошёл до последней реплики и сообщил, что Tab не находит следующего действия.
+Точный `StoryUtils.WaitForInput` создаёт StoryWaitForInput и текущий элемент
+`KeyboardListenerForInput : Element<IStoryApi>`. Его Handle(UIEvent) принимает
+UIKeyDownAction с `Data.actionName` равным SkipDialogue или FocusHero; отмена
+token запускает штатное завершение ожидания/аудио/cleanup. Подключён отдельный
+пункт «Продолжить» только для действующего listener той же текущей Story,
+через этот Handle; future Story steps и token не изменяются модом. UIKeyDownAction
+имеет пустой constructor, Data — фактический InputActionData, actionName — string;
+этот обработчик не читает Player/Position. KeyBindings.SkipDialogue = "SkipDialogue".
+
+После подключения этого ожидания пользователь самостоятельно дошёл до первого
+боя и услышал «Первый бой начался. Управление боем относится к следующему этапу».
+Журнал подтверждает исходные вызовы продолжения истории, выбора класса и начала
+забега. Это подтверждение входа в бой, а не доступности карточных действий M3.
+
+Речевое оформление: `InputActionsToTextMapping` и публичные массивы
+`keyToTextBidings/mouseBidings/gamepadToTextBidings`, вложенные
+`KeyToTextBiding/ActionToTextBiding/GamepadIndexToTextBiding` с полями
+`spriteName/text`, `KeyToTextBiding.keyCode`. `Services.TryGet<T>()` без параметров
+возвращает текущую таблицу или null. `VSmartText.Fill` использует эту же таблицу
+до FormatSprite. В речи уже показанный named sprite сопоставляется с её текстом
+или фактическим KeyCode; неоднозначный/неизвестный значок сохраняет своё имя.
+Форматирование удаляется, условия со знаками сравнения сохраняются. Личный
+текст редактора обходит преобразование и transcript. Точные metadata проверены
+BindingChecks; новая очистка проверена переносимыми тестами, отдельно с NVDA
+после принятия пути не повторялась.
+
 ## M1: текущий статус 0.1.3, 13 октября 2026
 
 Активный host теперь подключён при явном EnableTitleInput; точные fingerprints
