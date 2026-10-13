@@ -65,7 +65,8 @@
       "0.3.2-game-menu-open-hold-arrow-reading-close-reopen-with-nvda",
       "0.3.2-multiple-enemies-target-cancel-escape-hold-hand-return-and-enter-target-enter-with-nvda",
       "0.3.3-post-combat-resource-names-and-available-reward-path-with-nvda",
-      "0.3.3-target-confirmation-enter-hold-plays-card-once-with-nvda"
+      "0.3.3-target-confirmation-enter-hold-plays-card-once-with-nvda",
+      "0.3.3-held-enter-alt-tab-return-no-repeat-release-and-new-press-with-nvda"
     ],
     "portable_tested": true,
     "full_path_accepted": true,
@@ -129,7 +130,8 @@
       "0.3.2-game-menu-open-hold-arrow-reading-close-reopen-with-nvda",
       "0.3.2-multiple-enemies-target-cancel-escape-hold-hand-return-and-enter-target-enter-with-nvda",
       "0.3.3-post-combat-resource-names-and-available-reward-path-with-nvda",
-      "0.3.3-target-confirmation-enter-hold-plays-card-once-with-nvda"
+      "0.3.3-target-confirmation-enter-hold-plays-card-once-with-nvda",
+      "0.3.3-held-enter-alt-tab-return-no-repeat-release-and-new-press-with-nvda"
     ],
     "game_actions_enabled": true,
     "m1_accepted": true,
@@ -140,7 +142,6 @@
       "m3-multistep-selection-and-death-of-target",
       "m3-class-variants-and-conversion",
       "m3-defeat-and-remaining-reward-variants",
-      "m3-held-enter-alt-tab-and-reentry",
       "retained-card-native-endturn-live-reproduction",
       "final-quickcast-on-off-single-multiple-target-and-repeat-replay",
       "info-readouts-hold-layout-reserved-modifier-live-check",
@@ -154,7 +155,7 @@
       "class-hint-image-is-not-transcribed",
       "retained-card-native-endturn-static-early-return-risk",
       "exploration-full-run-M4-to-M6-not-implemented-or-accepted",
-      "selected-readouts-hand-menu-target-cancel-one-post-combat-reward-path-and-enter-confirm-hold-do-not-cover-search-hold-alt-tab-target-disappearance-or-full-M3",
+      "selected-readouts-hand-menu-target-cancel-one-post-combat-reward-path-enter-hold-and-alt-tab-do-not-cover-search-hold-target-disappearance-or-full-M3",
       "0.3.3-post-combat-reward-accepted-for-reported-class-egery-only-reward-type-unspecified",
       "0.3.3-enter-confirm-hold-single-play-accepted-focus-return-not-explicitly-reported"
     ],
@@ -168,6 +169,7 @@
     "m3_target_cancel_hold_and_replay_accepted": true,
     "m3_post_combat_resource_names_and_available_reward_path_accepted": true,
     "m3_enter_hold_single_play_accepted": true,
+    "m3_enter_hold_alt_tab_reentry_accepted": true,
     "m3_multicard_or_retention_probe": {
       "version": "0.3.3",
       "result": "not-encountered",
@@ -253,7 +255,7 @@
       "backup_verified": true,
       "package_files_verified": 6,
       "live_replayed": true,
-      "live_scope": "User confirmed post-combat resource names replacing B/CS/JP/RD/Ta/GT and Continue to reading and obtaining the available reward with keyboard and NVDA. Reported class label: Егерь; reward type unspecified; other classes, reward variants and defeat remain pending"
+      "live_scope": "User confirmed post-combat resource names replacing B/CS/JP/RD/Ta/GT and Continue to reading and obtaining the available reward with keyboard and NVDA. User also confirmed single card play on held Enter and held Enter across Alt+Tab and return: no repeat until release, then a new press works. Reported class label: Егерь; reward type unspecified; other classes, reward variants and defeat remain pending"
     }
   ],
   "m3_build_evidence": {
