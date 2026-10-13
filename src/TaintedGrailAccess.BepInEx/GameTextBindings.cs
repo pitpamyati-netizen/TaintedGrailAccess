@@ -32,6 +32,8 @@ namespace TaintedGrailAccess.BepInExHost
 
         private string SpriteLabel(string name)
         {
+            var combatLabel = CombatSpriteLabel(name);
+            if (combatLabel != null) return combatLabel;
             if (World == null) return null;
             var mapping = _getTextMapping.Invoke(ReadProp("world", "Services", World), null);
             if (mapping == null) return null;

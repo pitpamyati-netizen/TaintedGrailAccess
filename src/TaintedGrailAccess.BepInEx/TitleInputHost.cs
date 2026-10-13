@@ -110,6 +110,9 @@ namespace TaintedGrailAccess.BepInExHost
                 Target(assembly.GetType("Awaken.TG.MVC.UI.Handlers.Focuses.Focus", true), "BeforeDelivery", nameof(BeforeGameSubmit), evt),
                 Target(assembly.GetType("Awaken.TG.Main.UI.Components.ARButton", true), "Handle", nameof(BeforeGameSubmit), evt),
                 Target(assembly.GetType("Awaken.TG.Main.Classes.VRuneSelection", true), "Handle", nameof(BeforeGameSubmit), evt),
+                Target(assembly.GetType("Awaken.TG.Main.Heroes.Fights.VFightTargeting", true), "Handle", nameof(BeforeGameSubmit), evt),
+                Target(assembly.GetType("Awaken.TG.Main.Heroes.CombatItems.VFightCombatItem", true), "Handle", nameof(BeforeGameSubmit), evt),
+                Target(assembly.GetType("Awaken.TG.Main.Fights.Rewards.EndPanels.Stats.VFightEndVictorySummary", true), "Handle", nameof(BeforeGameSubmit), evt),
                 Target(typeof(EventSystem), "Update", nameof(BeforeEventSystem)),
                 Target(typeof(StandaloneInputModule), "Process", nameof(BeforeEventSystem)),
                 Target(typeof(Button), "OnSubmit", nameof(BeforeToolkitSubmit), typeof(BaseEventData)),
@@ -245,6 +248,7 @@ namespace TaintedGrailAccess.BepInExHost
             _bindings.HelpOpen = false;
             _bindings.ClearTextFeedback();
             _bindings.ClearAuxiliaryText();
+            _bindings.ClearCombat();
             _lastSnapshot = null;
             _lastFrame = -1;
         }
@@ -369,7 +373,7 @@ namespace TaintedGrailAccess.BepInExHost
             catch (Exception error) { _faults.Report("text.native", error); return false; }
             finally { _bindings.World = null; }
         }
-        public void ObserveText() { WithWorld(() => { _bindings.ObserveText(); _bindings.ObserveAuxiliaryText(); return true; }); }
+        public void ObserveText() { WithWorld(() => { _bindings.ObserveText(); _bindings.ObserveAuxiliaryText(); _bindings.ObserveCombat(); return true; }); }
         private static bool BeforeLegacyKey(Event __0, ref object __result)
         { return BeforeTextKey(__0, ref __result, false); }
         private static bool BeforeTextKey(Event evt, ref object result, bool tmp)

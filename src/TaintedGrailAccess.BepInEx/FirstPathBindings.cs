@@ -26,7 +26,7 @@ namespace TaintedGrailAccess.BepInExHost
         private string _actionScreen;
         private string _auxiliaryText;
         private readonly HashSet<string> _observedPathViews = new HashSet<string>();
-        private static readonly string[] PathScreens = { "mode", "slots", "patch", "welcome", "creator", "class", "run", "story", "video", "fightEntry", "tutorial", "loading" };
+        private static readonly string[] PathScreens = { "mode", "slots", "patch", "welcome", "creator", "class", "run", "story", "video", "tutorial", "loading" };
         private static readonly Dictionary<string, string> ButtonLabels = new Dictionary<string, string>
         {
             ["mode.conquest"] = "path.conquest", ["mode.weeklyEvent"] = "path.weekly", ["mode.backButton"] = "path.back",
@@ -35,7 +35,15 @@ namespace TaintedGrailAccess.BepInExHost
             ["run.lowerCorruption"] = "path.lowerDifficulty", ["run.increaseCorruption"] = "path.raiseDifficulty",
             ["run.selectRuneLeft"] = "path.previousClass", ["run.selectRuneRight"] = "path.nextClass",
             ["run.expandRuneDescription"] = "path.classDetails", ["run.expandPassiveDescription"] = "path.passiveDetails",
-            ["run.toggleCorruptionDescription"] = "path.difficultyDetails"
+            ["run.toggleCorruptionDescription"] = "path.difficultyDetails",
+            ["combat.showDeckButton"] = "combat.showDeck", ["combat.showDiscardButton"] = "combat.showDiscard",
+            ["combat.showGraveButton"] = "combat.showGrave", ["combat.showExileButton"] = "combat.showExile",
+            ["result.leftArrow"] = "combat.previousOrb", ["result.rightArrow"] = "combat.nextOrb",
+            ["result.fuseButton"] = "combat.fuseOrb", ["result.continueButton"] = "path.continue",
+            ["result.takeAllButton"] = "combat.takeAll", ["choose.skipButton"] = "combat.skip",
+            ["choose.rerollButton"] = "combat.reroll",
+            ["cardSpec.previousArrow"] = "combat.previousSide", ["cardSpec.nextArrow"] = "combat.nextSide",
+            ["combat.classHelp"] = "combat.classHelp", ["combatTutorial.close"] = "combat.close"
         };
 
         private void InitializePath(Assembly assembly)

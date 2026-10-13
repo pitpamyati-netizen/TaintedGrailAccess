@@ -15,12 +15,12 @@
 | --- | --- | --- |
 | A1: параллельное дерево | GraphBuilder/KeyGraph; TitleUiBindings | Меню использует независимое дерево; native selection только для текстового редактора |
 | A2: immediate mode | Rerender, новый builder; TitleUiBindings/LiveViewSelection | World читается в callback и освобождается; view/delegates не сохраняются |
-| A3: identity, не render reference | ControlId; reference/structural/backward survivor tests | Domain id конкретной карты нужно найти |
+| A3: identity, не render reference | ControlId; reference/structural/backward survivor tests; CardInHand reference + Model.ID | Перестановка/удаление одинаковых карт проверены переносимо; живая рука M3 ещё не принята |
 | A4: announce once | Navigator.AnnounceLanding, differ/direct memory; speech/sound-failure tests | Игровые hooks не должны добавлять сторонние focus Speak |
-| A5: оригинальные handlers | ARButton.Handle, Button/Toggle.OnSubmit, MoveSlider, TMP selection/click, loading/story wait Handle | Первый путь M2 принят с NVDA; карточный бой и полный забег остаются M3–M5 |
+| A5: оригинальные handlers | ARButton.Handle, MoveSlider, native text/loading/story; ApplyClick, MarkTarget, EndTurn и reward buttons | M2 принят; M3 подключён и собран, живая приёмка боя не выполнена |
 | A6: видимость как у зрячего | Живые Model.Views, active/Canvas/CanvasGroup/TMP, top modal, Interactable | Меню, загрузка и начальные диалоги GOG 1.61; скрытые игровые данные не читаются |
 | A7: provenance речи | Interrupt для прямого input, queue для differ/Live, отдельный private канал | NVDA принят для первого пути; другие backends не приняты |
-| A8: локализация | Localizer ru/en, текущий игровой текст, очистка оформления и живая InputActionsToTextMapping | Неизвестные иконки обозначаются явно; семантика боевых значков остаётся M3 |
+| A8: локализация | Localizer ru/en, игровой текст, InputActionsToTextMapping и исследованные StatType icons | Неизвестные иконки обозначаются явно; игровые числа/описания не пересчитываются |
 | P1–P9 | Подробная таблица в ARCHITECTURE.md | Особо P4: ownership model не заменяет физические hooks |
 
 ## Ядро: разделы 3–6
@@ -76,17 +76,19 @@
 
 ## Четыре пути ввода: раздел 8
 
-| Путь | Статус 0.2.0 |
+| Путь | Статус 0.3.0 |
 | --- | --- |
 | Poller мода | Early Update и prefixes TitleScreen, BaseScene, GameUI, EventSystem, loading; once/frame, held/release/blur; приоритет живой загрузки |
 | Global keymap/Rewired | Живые enabled keyboard maps; suppress только присвоенных источников. UINaviAction использует фактические Horizontal/Vertical |
-| UI focus/Submit | Own-action scope; Focus/ARButton и Unity Button/Toggle/Move guards; открывающий Enter защищён и в TMP/InputField.KeyPressed |
+| UI focus/Submit | Own-action scope; Focus/ARButton/Unity и боевые Submit guards, живой OnPress; отдельные игровые сочетания не блокируются общим наличием Enter |
 | Exclusive modal | Только собственная справка Ctrl+F1. GameUI, Rewired, selected-object keyboard gate; Escape возвращает сохранённый cursor |
 
 Меню, физический повтор, Alt+Tab, справка, rebind/cancel и возврат проверены
 в игре с NVDA; native text capture и набор/удаление также подтверждены.
 Речевой просмотр и редактирование текста приняты с NVDA; сценарии —
 M1_VERIFICATION.md и M2_VERIFICATION.md. Вход в первый бой принят отдельно.
+Шесть переносимых проверок M3 и BindingChecks описаны в M3_VERIFICATION.md;
+они не заменяют несколько боёв с NVDA и проверку всех классовых вариантов.
 Raw/text отключают навигацию и поиск. Unknown chords вне собственной modal
 проходят игре; KeyUp не мешает штатной очистке held state. Exit/disable/failure
 освобождают ownership; Dispose снимает только собственные Harmony patches.

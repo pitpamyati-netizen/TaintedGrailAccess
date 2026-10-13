@@ -9,7 +9,7 @@
   "production_target": "netstandard2.0",
   "test_runtime": "8.0.20",
   "game_tested": true,
-  "game_test_scope": "GOG 1.61: M1 menus/input plus M2 slider, spoken native editing and independent new-hero/tutorial/dialogue/class path to first combat; combat actions are M3",
+  "game_test_scope": "Historical M1/M2 accepted; initial 0.3.0 combat log shows live sections, cards, targets, turn completion, round progression and pile inspection; M3 full gate remains pending",
   "native_speech_tested": true,
   "native_speech_scope": "NVDA heard by blind user; other backends and full gameplay not accepted",
   "historical_game_validation": {
@@ -29,7 +29,7 @@
     "unity_version": "2020.3.23f1",
     "backend": "Mono",
     "loader": "BepInEx 5.4.23.5",
-    "plugin": "0.2.0",
+    "plugin": "0.3.0",
     "architecture": "x64",
     "build_id": "59087960036481007",
     "application_version": "1.61",
@@ -55,7 +55,11 @@
       "initial-popup-story-and-wait-confirmation",
       "available-class-and-starting-passive-selection",
       "new-run-start",
-      "first-combat-entry"
+      "first-combat-entry",
+      "initial-m3-live-combat-sections-stats-intents-and-resources",
+      "initial-m3-card-applyclick-marktarget-and-blocking-effect",
+      "initial-m3-original-endturn-and-next-round",
+      "initial-m3-original-pile-inspection-and-close"
     ],
     "portable_tested": true,
     "full_path_accepted": true,
@@ -80,8 +84,20 @@
       "visible-popup-story-choices-and-original-wait-confirmation",
       "class-passive-available-difficulty-and-new-run-adapters",
       "visible-tutorial-text-and-subtitles",
-      "first-combat-entry-without-combat-actions",
-      "spoken-game-formatting-with-live-input-icon-labels"
+      "spoken-game-formatting-with-live-input-icon-labels",
+      "live-combat-status-hand-enemies-allies-resources-actions-log",
+      "card-instance-reference-and-model-id",
+      "passive-card-tooltip-current-cost-side-original-spec-inspection",
+      "original-card-onpress-handler-and-in-progress-guard",
+      "live-target-list-death-visibility-and-skill-validity-check",
+      "min-max-explicit-selection-confirmation-and-allowed-cancel",
+      "original-class-ultimate-detail-and-rune-deck-inspection",
+      "visible-intent-status-tier-and-stat-range",
+      "combat-item-quantity-and-original-use",
+      "original-end-turn-with-modal-guard",
+      "visible-log-event-cursor-turn-queue-and-short-full-history",
+      "visible-result-and-original-reward-buttons",
+      "class-hint-modal-original-close-without-image-transcription"
     ],
     "compiled_with_game": true,
     "blind_user_accepted": [
@@ -98,18 +114,31 @@
     ],
     "game_actions_enabled": true,
     "m1_accepted": true,
-    "game_action_scope": "Explicit EnableTitleInput, exact fingerprints, live menu/loading/initial-story/run UI and original handlers; unbound example remains disabled",
-    "pending": [],
+    "game_action_scope": "Explicit EnableTitleInput, exact fingerprints, live M1/M2 and M3 combat UI with original handlers; unbound example remains disabled",
+    "pending": [
+      "m3-multiple-combats-with-nvda",
+      "m3-multistep-selection-and-death-of-target",
+      "m3-class-variants-and-conversion",
+      "m3-victory-defeat-rewards",
+      "m3-repeat-cancel-alt-tab",
+      "retained-card-native-endturn-live-reproduction",
+      "final-m3-guard-build-deployment-and-replay"
+    ],
     "limitations": [
       "saved-consent-not-reset-and-TOS-not-repeated-in-game",
       "resolution-change-and-every-settings-list-variant-not-individually-live-tested",
       "final-formatting-cleanup-portable-and-compiled-not-separately-NVDA-retested",
-      "combat-exploration-full-run-M3-to-M6-not-implemented-or-accepted",
-      "gamepad-other-builds-modes-and-other-speech-backends-not-accepted"
+      "gamepad-other-builds-modes-and-other-speech-backends-not-accepted",
+      "m3-initial-live-log-is-not-blind-user-acceptance",
+      "class-hint-image-is-not-transcribed",
+      "retained-card-native-endturn-static-early-return-risk",
+      "exploration-full-run-M4-to-M6-not-implemented-or-accepted"
     ],
     "full_path_scope": "M2 first path from title/new game through tutorial to first combat entry only",
     "full_gameplay_accepted": false,
-    "m2_accepted": true
+    "m2_accepted": true,
+    "m3_accepted": false,
+    "m3_class_variants_accepted": false
   },
   "results": [
     {
@@ -121,7 +150,7 @@
     {
       "failed": 0,
       "project": "Runtime",
-      "passed": 67,
+      "passed": 73,
       "phase": "run"
     },
     {
@@ -153,7 +182,14 @@
       "project": "BindingChecks",
       "phase": "metadata-with-game",
       "exit_code": 0,
-      "scope": "Exact menu/settings/preloader/story/run/text-mapping binding metadata resolved; no Unity objects, patches or game actions"
+      "scope": "Exact M1/M2/M3 binding metadata resolved; no Unity objects, patches or game actions"
+    },
+    {
+      "project": "Deployment 0.3.0 initial",
+      "phase": "installed-and-first-combat-run",
+      "tested": true,
+      "backup_verified": true,
+      "scope": "Initial reversible 0.3.0 installation; combat log only; final guards and class-hint handling require another deployment/replay"
     }
   ]
 }

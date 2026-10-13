@@ -94,6 +94,7 @@ namespace TaintedGrailAccess.BepInExHost
             InitializePath(assembly);
             InitializeGameText(assembly);
             InitializeText();
+            InitializeCombat(assembly);
         }
 
         public void Register(ScreenManager screens)
@@ -103,12 +104,15 @@ namespace TaintedGrailAccess.BepInExHost
                 kind == "tutorial" ? 1 : kind == "mode" ? 4 : kind == "class" ? 6 : kind == "run" ? 7 :
                 kind == "fightEntry" ? 8 : kind == "story" ? 9 : kind == "slots" ? 12 : kind == "creator" ? 13 :
                 kind == "video" ? 18 : kind == "loading" ? 25 : 19));
-            screens.Register(new Recipe(this, "settings", 10));
-            screens.Register(new Recipe(this, "consent", 20));
-            screens.Register(new Recipe(this, "popup", 30));
-            screens.Register(new Recipe(this, "bug", 35));
-            screens.Register(new Recipe(this, "raw", 40));
-            screens.Register(new Recipe(this, "unmapped", 50));
+            foreach (var kind in CombatScreens) screens.Register(new Recipe(this, kind,
+                kind == "combat" ? 8 : kind == "result" ? 9 : kind == "retain" ? 12 : kind == "target" ? 15 :
+                kind == "runeDeck" ? 16 : kind == "choose" ? 26 : kind == "cardSpec" ? 27 : kind == "combatTutorial" ? 28 : 50));
+            screens.Register(new Recipe(this, "settings", 60));
+            screens.Register(new Recipe(this, "consent", 70));
+            screens.Register(new Recipe(this, "popup", 80));
+            screens.Register(new Recipe(this, "bug", 85));
+            screens.Register(new Recipe(this, "raw", 90));
+            screens.Register(new Recipe(this, "unmapped", 95));
             screens.Register(new Recipe(this, "help", 100));
         }
 
@@ -137,7 +141,13 @@ namespace TaintedGrailAccess.BepInExHost
             return (tmp != null && tmp.isActiveAndEnabled && tmp.isFocused) || (legacy != null && legacy.isActiveAndEnabled && legacy.isFocused);
         }
 
-        private object Find(string kind) => World == null ? null : _find[kind].Invoke(World, null);
+        private object Find(string kind)
+        {
+            if (World == null) return null;
+            if (kind == "cardSpec") return All(kind).FirstOrDefault(model => ModelLive(model) && ReadProp("cardSpec", "Host", model) == null &&
+                (ViewOf(model, _types["cardSpecView"]) != null || ViewOf(model, _types["cardSpecUi"]) != null));
+            return _find[kind].Invoke(World, null);
+        }
         private Component View(string kind)
         {
             var model = Find(kind);
@@ -170,6 +180,7 @@ namespace TaintedGrailAccess.BepInExHost
             if (kind == "help") return HelpOpen;
             if (kind == "raw") return RawView() != null;
             if (kind == "unmapped") return UnsupportedModal();
+            if (CombatScreens.Contains(kind)) return CombatActive(kind);
             if (PathScreens.Contains(kind)) return PathActive(kind);
             var view = View(kind);
             if (view == null || !_types[kind + "View"].IsInstanceOfType(view)) return false;
@@ -185,11 +196,13 @@ namespace TaintedGrailAccess.BepInExHost
         {
             if (World == null) return false;
             var top = TopLayerModel();
-            return top != null && !new[] { "menu", "settings", "consent", "popup", "bug" }.Concat(PathScreens.Where(k => k != "tutorial")).Any(kind => ReferenceEquals(top, Find(kind)))
+            return top != null && !new[] { "menu", "settings", "consent", "popup", "bug" }.Concat(PathScreens.Where(k => k != "tutorial")).Concat(CombatScreens).Any(kind => ReferenceEquals(top, Find(kind)))
+                && !KnownCombatOwner(top)
                 && !All("storyOnTop").Any(model => ReferenceEquals(model, top));
         }
         private bool CanAct(string kind)
         {
+            if (CombatScreens.Contains(kind)) return CombatCanAct(kind);
             if (!Active(kind) || Capturing() || HelpOpen || _actionScreen != kind) return false;
             if (kind == "loading") return View("popup") == null && View("settings") == null;
             var top = TopLayerModel();
@@ -205,6 +218,7 @@ namespace TaintedGrailAccess.BepInExHost
         {
             if (!Active(kind)) return;
             if (kind == "raw" || kind == "unmapped") return;
+            if (BuildCombat(kind, builder)) return;
             if (BuildPath(kind, builder)) return;
             if (kind == "help")
             {
@@ -302,6 +316,7 @@ namespace TaintedGrailAccess.BepInExHost
         private bool Back(string kind)
         {
             if (kind == "help") { HelpOpen = false; return true; }
+            if (CombatScreens.Contains(kind)) return CombatBack(kind);
             if (PathBack(kind)) return true;
             if (kind != "settings" || !CanAct(kind)) return false;
             Invoke("settings.back", () => _closeSettings.Invoke(Find("settings"), null));
@@ -316,7 +331,7 @@ namespace TaintedGrailAccess.BepInExHost
         }
         private void Prop(string alias, string name, Type expected = null)
         {
-            var property = _types[alias].GetProperty(name);
+            var property = _types[alias].GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (property == null || (expected != null && property.PropertyType != expected)) throw new MissingMemberException(_types[alias].FullName, name);
             _properties.Add(alias + "." + name, property);
         }

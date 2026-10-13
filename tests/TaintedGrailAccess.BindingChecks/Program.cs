@@ -32,7 +32,7 @@ try
         var assembly = Assembly.Load(name);
         Console.WriteLine(name + " MVID=" + assembly.ManifestModule.ModuleVersionId);
     }
-    Console.WriteLine("Точные типы и поля стартовых привязок найдены. Игровые действия и ввод не проверялись.");
+    Console.WriteLine("Точные типы, поля и сигнатуры меню, первого пути и боя M3 найдены. Игровые действия и ввод не проверялись.");
     return 0;
 }
 catch (Exception error)
