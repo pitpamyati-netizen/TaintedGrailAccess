@@ -45,6 +45,16 @@ MVID `78793877-83a2-4bfc-970d-974256f05d98`. Остальные обязател
   `Skill.IsValidTarget(ICharacter)` перечитывается перед действием.
   `VFightTargeting.Handle(UIEvent)` с `UICancelAction` — штатная отмена.
   Native Hover/default-focus/координаты для навигации мода не используются.
+  `HeroFighter.FindTargetWithResult(Skill, ARButton, RectTransform)` имеет
+  штатный caller-less путь. Только внутри собственного ownership scope мод
+  передаёт caller=null: сама игра тогда использует QuickCast для единственной
+  цели и сохраняет TargetedOnlyPossibleTarget с повторной проверкой после
+  анимации. QuickCast=false или несколько целей открывают обычный targeting.
+  Это изменение аргумента исходного handler, без AssignNewTargets/записи
+  `_autoTargeted` модом; native вызовы остаются с прежним caller.
+  В локальном 0Harmony 2.9.0.0 проверен HarmonyManipulator.EmitCallParameter:
+  для ссылочного аргумента и ref object используется Ldarga, без изменения
+  игровых полей. Это статическая проверка совместимости prefix, не live-вызов.
 - `NpcFighter.IsAlive/IsEnemy/IsAlly/Board/Name`, `V3DNpcFighter`,
   `V3DFighterHUD`, `V3DNpcFighterUI`: наличие живого view и визуальная цепочка.
   `VCStatDisplay.text/nameText/icon`, `statType.Enum.DisplayName` — уже
@@ -52,6 +62,9 @@ MVID `78793877-83a2-4bfc-970d-974256f05d98`. Остальные обязател
   `VCRangeStatDisplay.minStat/text` — показанный диапазон без пересчёта.
   StatType.Abbreviation/DisplayName и точные Stats.Health/CombatPoints/XP,
   RuneStat.Charges дают локализованное значение соответствующих показанных иконок.
+  Realm.Stats.Wealth/WyrdShards: те же DisplayName/Abbreviation для показанной
+  стоимости обновления выбора и валюты наград. VChooseWindow.wealth содержит
+  уже отрисованную сумму; цена Reroll входит в исходный текст кнопки.
   V3DFightBoardUI.viewCanvas, druidTutorialIconButton/closeDruidTutorialButton:
   графическая классовая подсказка открывается/закрывается оригинальными OnClick,
   имеет собственный приоритет; её пиксели не превращаются в источник текста.

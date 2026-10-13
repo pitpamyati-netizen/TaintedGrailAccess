@@ -57,6 +57,7 @@ namespace TaintedGrailAccess.BepInExHost
                 new[] { "statType", "Awaken.TG.Main.Heroes.Stats.StatType" },
                 new[] { "characterStats", "Awaken.TG.Main.Character.Stats" },
                 new[] { "runeStats", "Awaken.TG.Main.Heroes.Skills.Runes.RuneStat" },
+                new[] { "realmStats", "Awaken.TG.Main.Realms.Realm+Stats" },
                 new[] { "item", "Awaken.TG.Main.Heroes.Items.Item" },
                 new[] { "richReference", "Awaken.TG.Main.Utility.RichEnumReference.RichEnumReference" },
                 new[] { "npcUi", "Awaken.TG.Main.Fights._3D.V3DNpcFighterUI" },
@@ -94,7 +95,8 @@ namespace TaintedGrailAccess.BepInExHost
             Prop("richReference", "Enum"); Prop("statType", "DisplayName"); Prop("statType", "Abbreviation", typeof(string));
             Prop("item", "Quantity", typeof(int));
             _combatSpriteFields = new[] { _types["characterStats"].GetField("Health"), _types["characterStats"].GetField("CombatPoints"),
-                _types["characterStats"].GetField("XP"), _types["runeStats"].GetField("Charges") };
+                _types["characterStats"].GetField("XP"), _types["runeStats"].GetField("Charges"),
+                _types["realmStats"].GetField("Wealth"), _types["realmStats"].GetField("WyrdShards") };
             if (_combatSpriteFields.Any(f => f == null || !f.IsStatic || !_types["statType"].IsAssignableFrom(f.FieldType))) throw new MissingFieldException("Combat stat sprite metadata");
             Prop("combatItem", "Item"); Prop("combatItemView", "CanBeUsed", typeof(bool));
             Prop("cardSpec", "Host");
@@ -122,6 +124,7 @@ namespace TaintedGrailAccess.BepInExHost
             Field("ultimateView", "charges", typeof(TextMeshProUGUI)); Field("ultimateView", "specialText", typeof(TextMeshProUGUI)); Field("ultimateView", "button", _types["button"]);
             foreach (var name in new[] { "acceptButton", "skipButton", "rerollButton" }) Field("chooseView", name, _types["button"]);
             Field("chooseView", "decorsParent", typeof(Transform)); Field("combatChoiceView", "optionButton", _types["button"]); Field("combatChoiceView", "content", typeof(Transform));
+            Field("chooseView", "wealth");
             Field("runeDeckView", "cardsParent", typeof(Transform)); Field("runeDeckView", "closeButton", _types["button"]);
             Field("battleLogView", "loggedMessages"); Field("loggedMessage", "log", typeof(string)); Field("loggedMessage", "roundNumber", typeof(int));
             foreach (var name in new[] { "resumeButton", "saveButton", "loadButton", "optionsButton", "bugReportButton", "saveAndQuit", "quitToMenu", "quitGame" }) Field("combatMenuView", name, _types["button"]);
@@ -132,6 +135,7 @@ namespace TaintedGrailAccess.BepInExHost
             foreach (var kind in new[] { "targetView", "cardSpecView", "combatCardView", "ultimateView", "preview", "combatItemView", "runeDeckView", "summaryView" })
                 _combatMethods.Add(kind + ".Handle", RequireMethod(_types[kind], "Handle", evt));
             _combatMethods.Add("skill.IsValidTarget", RequireMethod(_types["skill"], "IsValidTarget", _types["character"]));
+            _combatMethods.Add("fighter.FindTargetWithResult", RequireMethod(_types["fighter"], "FindTargetWithResult", _types["skill"], _types["button"], typeof(RectTransform)));
             _combatMethods.Add("target.MarkTarget", RequireMethod(_types["target"], "MarkTarget", assembly.GetType("Awaken.TG.MVC.UI.Handlers.Targets.ITargetable", true),
                 assembly.GetType("Awaken.TG.MVC.UI.UIPosition", true), typeof(EventModifiers)));
             var available = _types["availability"];
@@ -524,6 +528,10 @@ namespace TaintedGrailAccess.BepInExHost
                 new NodeAnnouncement(() => CanConfirmChoice() ? null : _text.Get("combat.selectionIncomplete"), "reason", true))
                 { OnActivate = () => { if (CanConfirmChoice()) ActivateButton("choose", accept, "combat.choose.confirm"); } });
             Buttons(builder, "choose", view, new[] { "skipButton", "rerollButton" });
+            var wealth = (Component)ReadField("chooseView", "wealth", view);
+            if (Visible(wealth))
+                foreach (var text in wealth.GetComponentsInChildren<TMP_Text>(false).Where(t => Visible(t) && !string.IsNullOrWhiteSpace(t.text)))
+                { var current = text; builder.Add(ControlId.Referenced(current, "combat.choose.wealth." + current.GetInstanceID()), new NodeVtable(new NodeAnnouncement(() => current.text, "label", true))); }
             if ((bool)ReadField("chooseSetup", "closeable", configuration)) builder.Add(ControlId.Structural("combat.choose.close"),
                 new NodeVtable(new NodeAnnouncement(() => _text.Get("combat.close"))) { OnActivate = () => CombatBack("choose") });
         }

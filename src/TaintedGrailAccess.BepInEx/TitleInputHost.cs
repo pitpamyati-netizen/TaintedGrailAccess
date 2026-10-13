@@ -110,6 +110,8 @@ namespace TaintedGrailAccess.BepInExHost
                 Target(assembly.GetType("Awaken.TG.MVC.UI.Handlers.Focuses.Focus", true), "BeforeDelivery", nameof(BeforeGameSubmit), evt),
                 Target(assembly.GetType("Awaken.TG.Main.UI.Components.ARButton", true), "Handle", nameof(BeforeGameSubmit), evt),
                 Target(assembly.GetType("Awaken.TG.Main.Classes.VRuneSelection", true), "Handle", nameof(BeforeGameSubmit), evt),
+                Target(assembly.GetType("Awaken.TG.Main.Heroes.Fights.HeroFighter", true), "FindTargetWithResult", nameof(BeforeOwnTargeting),
+                    assembly.GetType("Awaken.TG.Main.Heroes.Skills.Skill", true), assembly.GetType("Awaken.TG.Main.UI.Components.ARButton", true), typeof(RectTransform)),
                 Target(assembly.GetType("Awaken.TG.Main.Heroes.Fights.VFightTargeting", true), "Handle", nameof(BeforeGameSubmit), evt),
                 Target(assembly.GetType("Awaken.TG.Main.Heroes.CombatItems.VFightCombatItem", true), "Handle", nameof(BeforeGameSubmit), evt),
                 Target(assembly.GetType("Awaken.TG.Main.Fights.Rewards.EndPanels.Stats.VFightEndVictorySummary", true), "Handle", nameof(BeforeGameSubmit), evt),
@@ -332,6 +334,15 @@ namespace TaintedGrailAccess.BepInExHost
             __result = owner._accept;
             owner.Trace("suppressed=game.Submit");
             return false;
+        }
+        private static void BeforeOwnTargeting(ref object __1)
+        {
+            var owner = _owner;
+            if (owner == null || !owner.Available || !owner._runtime.Input.OwnAction) return;
+            // This exact original API supports a caller-less action. It then applies the
+            // game's QuickCast rule itself, without a mouse-dependent OnRelease handler.
+            // Native callers and the game's skill/target/availability logic remain intact.
+            __1 = null;
         }
         private static bool BeforeToolkitSubmit(BaseEventData __0)
         {
