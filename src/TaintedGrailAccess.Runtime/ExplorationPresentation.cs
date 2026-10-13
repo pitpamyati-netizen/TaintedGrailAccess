@@ -67,6 +67,26 @@ namespace TaintedGrailAccess.Runtime
     /// <summary>Passive list presentation. Actions recheck disclosure and readiness at invocation.</summary>
     public static class ExplorationPresentation
     {
+        // Authored MarkerIcons/MarkerIconsBetter associations for the verified GOG build.
+        // Shared symbols deliberately use a common meaning, never the hidden location's tags.
+        private static readonly Dictionary<string, string> MarkerKinds = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            { "icon_map_stone", "crossroads" }, { "Income", "crossroads" },
+            { "icon_map_statue", "monument" }, { "Claimed", "monument" },
+            { "icon_map_boss", "boss" }, { "Explored", "boss" },
+            { "icon_map_treasure", "treasure" }, { "Unclaimed", "treasure" },
+            { "icon_map_enemy", "combat" }, { "Encounter", "combat" },
+            { "icon_map_location", "event" }, { "Lost", "event" },
+            { "icon_map_npc", "npc" }, { "Unexplored", "quest" }
+        };
+        /// <summary>Only the meaning of a currently drawn known symbol. Hidden/disabled providers are never read.</summary>
+        public static string MarkerKind(bool shown, bool enabled, Func<string> spriteName)
+        {
+            if (!shown || !enabled) return null;
+            var name = spriteName(); string kind;
+            return name != null && MarkerKinds.TryGetValue(name, out kind) ? kind : null;
+        }
+
         /// <summary>Names already reduced to spoken, visible UI text. Never query hidden name providers.</summary>
         public static string PlaceLabel(bool disclosed, Func<IEnumerable<string>> visibleNames, Func<string> unnamed, Func<string> anonymous)
         {

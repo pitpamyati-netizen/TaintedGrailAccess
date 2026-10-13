@@ -8,17 +8,18 @@ MVID `78793877-83a2-4bfc-970d-974256f05d98`. Assembly-CSharp также пров
 Игровые DLL и декомпиляция остаются вне публикуемых файлов.
 
 Подтверждено по исходным обработчикам; живая проверка 0.4.0 выявила отказ
-предварительной оценки, успешный подход пока не подтверждён:
+предварительной оценки, журнал 0.4.1 подтвердил подходы/диалоги/возвраты:
 
 - `Awaken.TG.Main.Locations.Location.VisibleToPlayer: bool` исключает Hidden
   и HiddenPassiveProgress; `FullyVisible: bool` дополнительно исключает InFOW.
   `VLocation.ShouldBeVisible: bool` дополнительно учитывает InRenderingRange.
-  Нельзя извлекать имя и сведения из частично показанного маркера.
+  Нельзя извлекать скрытое имя и сведения шаблона из частичного маркера.
 - `Awaken.TG.Main.Map.Minimap.VMapMarkerUI.fullyIcon/partlyIcon: Image`:
   UpdateVisibility учитывает FullyVisible, загрузку спрайта и границу биома.
   `MapMarkerUI.reference: MapMarker`, `MapMarker.MapCoords: MapCoords` —
   координаты именно показанного значка; TooltipText доступен лишь для fullyIcon.
-  Частично показанный маркер имеет только общую подпись и направление.
+  Частичный маркер имеет анонимную подпись и направление; в 0.4.4 допускается
+  смысл именно его показанного специализированного символа, без чтения full sprite.
 - `Awaken.TG.Main.Heroes.Hero.AcceptTarget(TargetChange): bool` — исходный
   обработчик IOrderable, вызываемый `Targeting.RetargetSelected` при клике.
   Он вызывает HeroMovement.AcceptNewTarget и ExecuteMovement. TargetChange
@@ -71,6 +72,14 @@ MVID `78793877-83a2-4bfc-970d-974256f05d98`. Assembly-CSharp также пров
 - `HeroInteraction.ShouldHappen(Hero,Place)` требует не-Invisible действий
   и `Location.Interactability.interactable`. Менгир с false остаётся доступен
   для подхода, но не взаимодействия; в 0.4.1 это подтверждено журналом.
+- 0.4.4: VMapMarkerUI.SetSprite использует MarkerIcons или customMarker;
+  LazySprites.TryGet(string) выбирает точное Sprite.name. Проверена авторская
+  MapMarkerIconsBetter (sharedassets0.assets SHA-256
+  `ade1c493197c482c119d58d3e7eb96aaa7535233b6e640c806976a4d1eca07db`, объект 528):
+  23 правила, восемь общих смыслов. Менгир/портал и магазин/другой NPC имеют
+  общий символ, поэтому узкое назначение по нему не утверждается. Рантайм
+  читает только показанный включённый Image.sprite.name; скрытые Tags/Template
+  не читаются. Неизвестный символ остаётся с номером. Нужна проверка NVDA.
 
 AstarPathfindingProject SHA-256 `2e45f26e3a09194232aebf342f6c5aa22627f6533d409b30e00c2278fa2778fe`,
 MVID `48d59566-cb6c-457f-8635-ba85dab68d1c`. Совпадение проверяется до

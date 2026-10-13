@@ -17,6 +17,8 @@ namespace TaintedGrailAccess.Runtime.Tests
             ("exploration_estimate_is_passive_and_original_handler_decides_movement", ExplorationTests.RouteEstimateDoesNotVetoOriginalAction),
             ("exploration_place_names_never_collapse_to_punctuation_or_reveal_hidden_names", ExplorationTests.SpokenPlaceLabels),
             ("exploration_numbered_names_keep_identity_across_reorder_disclosure_and_world_reset", ExplorationTests.StablePlaceNumbers),
+            ("exploration_marker_meaning_is_exact_visible_enabled_and_not_guessed", ExplorationTests.MarkerMeaning),
+            ("exploration_partial_marker_meaning_does_not_read_hidden_name_or_activate", ExplorationTests.PartialMarkerMeaning),
             ("exploration_hover_information_does_not_block_original_action", ExplorationTests.HoverInformationIsNotModal),
             ("exploration_disclosure_no_hidden_reads_passive_and_stale", ExplorationTests.DisclosureAndPassiveInspection),
             ("exploration_equal_names_reorder_remove_and_procedural_replacement", ExplorationTests.IdentityAndProceduralReplacement),

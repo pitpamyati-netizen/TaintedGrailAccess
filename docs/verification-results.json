@@ -5,44 +5,54 @@
   "success_scope": "Current automated checks, compilation and reversible installation only; full M3 and M4 game/NVDA acceptance remain false",
   "platform": "Windows x64",
   "sdk": "10.0.301",
-  "method": "0.4.3 scripts/test.ps1, scripts/build.ps1, BindingChecks and scripts/deploy.ps1; 0.4.0 through 0.4.2 live evidence retained separately",
+  "method": "0.4.4 scripts/test.ps1, scripts/build.ps1, BindingChecks and scripts/deploy.ps1; local read-only authored marker associations checked; historical 0.4.0 through 0.4.2 live evidence separate",
   "production_reference_check": true,
   "production_target": "netstandard2.0",
   "test_runtime": "8.0.20",
   "game_tested": true,
-  "game_test_scope": "Historical evidence: first combat completed on initial 0.3.0; selected readouts and hand focus accepted on 0.3.1; menu and held-Escape target cancellation followed by Enter-target-Enter accepted on 0.3.2. On installed 0.3.3 user confirmed post-combat resource names and Continue to reading and obtaining the available reward with NVDA. Reported class label: Егерь; reward type unspecified. No live test of new 0.3.4 paths. Full M3 gate open; M4 0.4.0 user-reported movement rejection confirmed by local log; 0.4.1 corrected movement has no live acceptance; 0.4.1 local log confirms original travel, story entry and return twice, with user-reported missing labels and intermittent interaction. 0.4.2 label and hover fixes received user feedback but remain unaccepted; 0.4.2 successful card actions with false busy speech confirmed by local log, unnamed locations reported by user; 0.4.3 new fixes await live acceptance",
+  "game_test_scope": "Historical evidence: first combat completed on initial 0.3.0; selected readouts and hand focus accepted on 0.3.1; menu and held-Escape target cancellation followed by Enter-target-Enter accepted on 0.3.2. On installed 0.3.3 user confirmed post-combat resource names and Continue to reading and obtaining the available reward with NVDA. Reported class label: Егерь; reward type unspecified. No live test of new 0.3.4 paths. Full M3 gate open; M4 0.4.0 user-reported movement rejection confirmed by local log; 0.4.1 corrected movement has no live acceptance; 0.4.1 local log confirms original travel, story entry and return twice, with user-reported missing labels and intermittent interaction. 0.4.2 label and hover fixes received user feedback but remain unaccepted; 0.4.2 successful card actions with false busy speech confirmed by local log, unnamed locations reported by user; 0.4.3 new fixes await live acceptance; 0.4.4 meaningful currently shown symbol associations checked statically against authored resources, no new live game test",
   "native_speech_tested": true,
-  "native_speech_scope": "Historical versions through 0.3.3 heard with NVDA; M4 0.4.1 missing names/intermittent interaction and 0.4.2 generic names/false unavailable speech reported by blind user. 0.4.3 new fixes and full gameplay remain unaccepted",
+  "native_speech_scope": "Historical versions through 0.3.3 heard with NVDA; M4 0.4.1 missing names/intermittent interaction and 0.4.2 generic names/false unavailable speech reported by blind user. User requested meaningful marker names after 0.4.3; no live acceptance of 0.4.3 or 0.4.4. Full gameplay remains unaccepted",
   "current_validation": {
-    "version": "0.4.3",
+    "version": "0.4.4",
     "implemented": true,
     "portable_tested": true,
     "compiled_with_game": true,
     "installed_hash_verified": true,
-    "installed_assembly_version": "0.4.3.0",
+    "installed_assembly_version": "0.4.4.0",
     "package_files_verified": 6,
     "backup_verified": true,
-    "backup_plugin_version": "0.4.2",
+    "backup_plugin_version": "0.4.3",
     "in_game_tested": false,
     "blind_user_accepted": false,
     "m4_gate_accepted": false,
-    "scope": "Stable numbered labels for visible unnamed places and anonymous partial markers, true shown game names retained, no hidden template reads; accepted card processing announced once with live rebaseline and duplicate guard; original single-legal-target QuickCast preserved by user choice; prior M4 movement and interaction coverage retained",
-    "new_runtime_scenarios": 12,
+    "scope": "Known currently drawn enabled map symbol explains marker purpose with stable number; shown original name has priority; partial symbol retains undisclosed status and never reads hidden names/tags/templates; shared symbols use common meaning and unknown custom symbols keep generic number. Previous movement, interaction and card-processing corrections retained; single-legal-target QuickCast preserved by user choice.",
+    "new_runtime_scenarios": 14,
     "checks": {
       "graph": 94,
-      "runtime": 96,
+      "runtime": 98,
       "windows_assertions": 18,
       "python": 21
     },
-    "host_sha256": "9dde14a5dca37a27d99420d402be1503a8c2ccca5f30c6db171b7db1b09cda17",
-    "backup_host_sha256": "62a77bb867c4092cd0699bcb3f06d7392a4005ebb6df4d3e3aac18b1e7d701e4",
+    "host_sha256": "ec4839cf853c2476522a53154c4e756693215a83dbe29f7723d535faf3b3bbdf",
+    "backup_host_sha256": "9dde14a5dca37a27d99420d402be1503a8c2ccca5f30c6db171b7db1b09cda17",
     "regression_before_fix": {
-      "corrected_version": "0.4.3",
+      "corrected_version": "0.4.4",
       "method": "Compiled adapter call graph checked by BindingChecks, no game actions invoked",
       "result": "Expected failure: original movement action calls the passive route estimate",
       "version": "0.4.0",
       "corrected_result": "passed"
-    }
+    },
+    "marker_meaning_evidence": {
+      "method": "Local read-only metadata and authored resource decoding, full object size checked; no Unity UI or game actions invoked",
+      "resource": "sharedassets0.assets",
+      "resource_sha256": "ade1c493197c482c119d58d3e7eb96aaa7535233b6e640c806976a4d1eca07db",
+      "authored_rules": 23,
+      "legacy_rules": 7,
+      "shared_categories": 8,
+      "live_speech_verified": false
+    },
+    "backup_scope": "Primary rollback copy of 0.4.3 saved and hash-verified on the first 0.4.4 installation; retained after adding transparent-image guard"
   },
   "historical_game_validation": {
     "plugin": "0.1.1",
@@ -61,7 +71,7 @@
     "unity_version": "2020.3.23f1",
     "backend": "Mono",
     "loader": "BepInEx 5.4.23.5",
-    "plugin": "0.4.3",
+    "plugin": "0.4.4",
     "architecture": "x64",
     "build_id": "59087960036481007",
     "application_version": "1.61",
@@ -470,5 +480,36 @@
       "corrected_result": "passed"
     },
     "live_evidence": "User reports nearly all places unnamed and false unavailable speech after successful card play. Local 0.4.2 log confirms one original dispatch per card, skill effects and one visible enemy; user chooses to preserve original single-legal-target QuickCast."
+  },
+  "historical_m4_validation_043": {
+    "version": "0.4.3",
+    "implemented": true,
+    "portable_tested": true,
+    "compiled_with_game": true,
+    "installed_hash_verified": true,
+    "installed_assembly_version": "0.4.3.0",
+    "package_files_verified": 6,
+    "backup_verified": true,
+    "backup_plugin_version": "0.4.2",
+    "in_game_tested": false,
+    "blind_user_accepted": false,
+    "m4_gate_accepted": false,
+    "scope": "Stable numbered labels for visible unnamed places and anonymous partial markers, true shown game names retained, no hidden template reads; accepted card processing announced once with live rebaseline and duplicate guard; original single-legal-target QuickCast preserved by user choice; prior M4 movement and interaction coverage retained",
+    "new_runtime_scenarios": 12,
+    "checks": {
+      "graph": 94,
+      "runtime": 96,
+      "windows_assertions": 18,
+      "python": 21
+    },
+    "host_sha256": "9dde14a5dca37a27d99420d402be1503a8c2ccca5f30c6db171b7db1b09cda17",
+    "backup_host_sha256": "62a77bb867c4092cd0699bcb3f06d7392a4005ebb6df4d3e3aac18b1e7d701e4",
+    "regression_before_fix": {
+      "corrected_version": "0.4.3",
+      "method": "Compiled adapter call graph checked by BindingChecks, no game actions invoked",
+      "result": "Expected failure: original movement action calls the passive route estimate",
+      "version": "0.4.0",
+      "corrected_result": "passed"
+    }
   }
 }

@@ -157,8 +157,35 @@ namespace TaintedGrailAccess.BepInExHost
         private bool LocationInteractable(object location) => (bool)ReadField("locationInteractability", "interactable", ReadProp("location", "Interactability", location));
         private string LocationLabel(object location) => !LocationShown(location) ? null :
             ExplorationPresentation.PlaceLabel(LocationDisclosed(location), () => ShownLocationNames(location),
-                () => _text.Get("exploration.numberedPlace", _placeNames.Number(location)), () => AnonymousLocationLabel(location));
-        private string AnonymousLocationLabel(object location) => _text.Get("exploration.numberedUnknownPlace", _placeNames.Number(location));
+                () => MarkerLocationLabel(location, true), () => AnonymousLocationLabel(location));
+        private string AnonymousLocationLabel(object location) => MarkerLocationLabel(location, false);
+        private string MarkerLocationLabel(object location, bool disclosed)
+        {
+            var number = _placeNames.Number(location);
+            var kind = ShownLocationMarkerKind(location);
+            return kind == null ? _text.Get(disclosed ? "exploration.numberedPlace" : "exploration.numberedUnknownPlace", number) :
+                _text.Get(disclosed ? "exploration.numberedKind" : "exploration.numberedPartialKind", _text.Get("exploration.kind." + kind), number);
+        }
+        private string ShownLocationMarkerKind(object location)
+        {
+            foreach (var marker in All("mapMarker"))
+            {
+                if (!ModelLive(marker)) continue;
+                var reference = ReadField("mapMarker", "reference", marker);
+                if (!ModelLive(reference) || !ReferenceEquals(ReadProp("markerReference", "ParentModel", reference), location)) continue;
+                var view = ViewOf(marker, _types["mapMarkerView"]);
+                if (view == null) continue;
+                foreach (var field in new[] { "fullyIcon", "partlyIcon" })
+                {
+                    var image = ReadField("mapMarkerView", field, view) as Image;
+                    if (image == null) continue;
+                    var kind = ExplorationPresentation.MarkerKind(Visible(image) && image.color.a > 0f, image.enabled,
+                        () => image.sprite == null ? null : image.sprite.name);
+                    if (kind != null) return kind;
+                }
+            }
+            return null;
+        }
         private string BriefLabel(object brief)
         {
             if (!ModelLive(brief)) return null;

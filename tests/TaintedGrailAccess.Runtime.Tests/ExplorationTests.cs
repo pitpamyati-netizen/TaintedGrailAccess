@@ -107,6 +107,56 @@ namespace TaintedGrailAccess.Runtime.Tests
             names.Reset(); Check(names.Number(second) == 1 && names.Number(first) == 2, "A released world starts a fresh numbering registry.");
         }
 
+        public static void MarkerMeaning()
+        {
+            var known = new Dictionary<string, string>
+            {
+                ["icon_map_stone"] = "crossroads", ["Income"] = "crossroads",
+                ["icon_map_statue"] = "monument", ["Claimed"] = "monument",
+                ["icon_map_boss"] = "boss", ["Explored"] = "boss",
+                ["icon_map_treasure"] = "treasure", ["Unclaimed"] = "treasure",
+                ["icon_map_enemy"] = "combat", ["Encounter"] = "combat",
+                ["icon_map_location"] = "event", ["Lost"] = "event",
+                ["icon_map_npc"] = "npc", ["Unexplored"] = "quest"
+            };
+            foreach (var pair in known)
+            {
+                int reads = 0; Func<string> sprite = () => { reads++; return pair.Key; };
+                Check(ExplorationPresentation.MarkerKind(false, true, sprite) == null && reads == 0, "A concealed image's cached sprite cannot reveal its meaning.");
+                Check(ExplorationPresentation.MarkerKind(true, false, sprite) == null && reads == 0, "A disabled full icon cannot leak through a partial marker.");
+                Check(ExplorationPresentation.MarkerKind(true, true, sprite) == pair.Value && reads == 1, "A currently drawn authored symbol conveys its verified meaning.");
+            }
+            foreach (var unknown in new[] { null, "", "icon_map_enemy_clone", "ICON_MAP_ENEMY", "custom_shop", "icon_map_hero" })
+                Check(ExplorationPresentation.MarkerKind(true, true, () => unknown) == null, "Never guess a custom symbol from its technical name or a substring.");
+            Check(known["icon_map_statue"] == "monument" && known["icon_map_npc"] == "npc" && known["Lost"] == "event",
+                "A shared symbol cannot claim menhir versus portal, shop versus other NPC, or a hidden event subtype.");
+        }
+        public static void PartialMarkerMeaning()
+        {
+            bool disclosed = false, shown = true; string sprite = "icon_map_boss"; int names = 0, moves = 0;
+            var model = new object(); var state = new GraphState(); var numbers = new ExplorationPlaceNames();
+            Func<string> visibleMeaning = () => ExplorationPresentation.MarkerKind(shown, true, () => sprite);
+            Func<string> anonymous = () => visibleMeaning() == "boss" ? "Босс " + numbers.Number(model) + "; место ещё не раскрыто" : "Нераскрытое место " + numbers.Number(model);
+            Func<string> label = () => ExplorationPresentation.PlaceLabel(disclosed,
+                () => { names++; return new[] { "Показанное имя" }; }, () => "Место " + numbers.Number(model), anonymous);
+            var graph = new KeyGraph(state, () =>
+            {
+                var b = new GraphBuilder(state);
+                ExplorationPresentation.Add(b, model, "marker", () => disclosed, () => shown, label, anonymous, () => "12 шагов", null, () => moves++, null);
+                return b.Build();
+            });
+            graph.Rerender(); Check(graph.Current.Vtable.Announcements[0].Text() == "Босс 1; место ещё не раскрыто" && names == 0 && moves == 0,
+                "Reading a displayed partial boss symbol neither reveals its hidden name nor starts a move.");
+            sprite = "custom_boss";
+            Check(graph.Current.Vtable.Announcements[0].Text() == "Нераскрытое место 1" && names == 0,
+                "An unknown changed sprite keeps the same anonymous number, without guessing or reading a hidden name.");
+            disclosed = true; graph.Rerender();
+            Check(graph.Current.Vtable.Announcements[0].Text() == "Показанное имя" && names == 1,
+                "Once disclosed, the actual shown name has priority over category and number.");
+            shown = false; graph.Rerender();
+            Check(graph.Current.Vtable.Announcements[0].Text() == null && names == 1 && moves == 0, "A vanished marker is silent and passive.");
+        }
+
         public static void HoverInformationIsNotModal()
         {
             Check(!ExplorationPresentation.BlocksExploration(true, true), "Visible hover information does not block the scanner's original action.");
