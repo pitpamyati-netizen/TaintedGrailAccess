@@ -190,10 +190,15 @@ namespace TaintedGrailAccess.BepInExHost
             var service = _getPathfinder.Invoke(_properties["world.Services"].GetValue(World), null);
             // A query without the hero's Seeker cannot replace its current movement request.
             var path = _explorationMethods["path"].Invoke(service, new[] { origin, target, (object)false, null }) as IEnumerable;
-            return RouteInspection.Inspect(path == null ? null : path.Cast<object>().Select(Point), Point(origin), Point(target), 3);
+            var route = RouteInspection.Inspect(path == null ? null : path.Cast<object>().Select(Point), Point(origin), Point(target), 3);
+            _log.Write("exploration.route", "status=" + route.Availability + "; points=" + route.PointCount +
+                "; start-gap=" + route.StartGap + "; end-gap=" + route.EndGap + "; length=" + route.Length);
+            return route;
         }
         private string RouteText(RouteInspection route) => route.Availability == RouteAvailability.Complete ?
-            _text.Get("exploration.route.complete", route.Length.ToString("F1")) : _text.Get("exploration.route." + route.Availability.ToString().ToLowerInvariant());
+            _text.Get("exploration.route.complete", route.Length.ToString("F1")) : route.Availability == RouteAvailability.Partial ?
+            _text.Get("exploration.route.partial", route.StartGap.ToString("F1"), route.EndGap.ToString("F1"), route.Length.ToString("F1")) :
+            _text.Get("exploration.route." + route.Availability.ToString().ToLowerInvariant());
 
         private void MoveToLocation(object location)
         {
@@ -201,16 +206,11 @@ namespace TaintedGrailAccess.BepInExHost
             var hero = Find("exploration"); var movement = ReadProp("exploration", "Movement", hero);
             if (!ModelLive(movement) || (bool)_explorationMethods["blocked"].Invoke(movement, null))
             { _speech?.Speak(_text.Get("exploration.blocked"), true); return; }
-            // The game's close-click handler enters immediately (<4 units) without asking A*.
-            // Keep that original path usable even when a route has no waypoints at the hero's feet.
-            bool close = LocationDisclosed(location) && Point(HeroCoords()).DistanceTo(Point(LocationCoords(location))) < 4;
-            if (!close)
-            {
-                var route = InspectRoute(location);
-                if (route.Availability != RouteAvailability.Complete) { _speech?.Speak(RouteText(route), true); return; }
-            }
-            // The path query may run game callbacks; recheck ownership, disclosure and lifetime afterwards.
-            if (!ExplorationCanAct("exploration") || !LocationShown(location) || !ReferenceEquals(hero, Find("exploration"))) return;
+            if (!Point(HeroCoords()).IsFinite || !Point(LocationCoords(location)).IsFinite)
+            { _speech?.Speak(_text.Get("exploration.invalidTarget"), true); return; }
+            // FindWaypoints is a passive estimate with different constraints/modifiers from
+            // HeroMovement.PlanMove's FindWaypointsFor(Hero.Seeker). It cannot veto an original
+            // action, including the game's close-click interaction. Only the game plans movement.
             bool accepted = true;
             var previousMove = ReadProp("movement", "CurrentMove", movement);
             if (LocationDisclosed(location))
@@ -221,7 +221,8 @@ namespace TaintedGrailAccess.BepInExHost
             else
                 Invoke("exploration.approachMarker", () => _explorationMethods["go"].Invoke(movement, new[] { LocationCoords(location), (object)true, 1f }));
             var move = ReadProp("movement", "CurrentMove", movement);
-            if (accepted && (!MapInteractive() || ExplorationActive("locationBrief") || StoryView() != null))
+            // A close-click can open interaction while AcceptTarget returns false (no Move created).
+            if (!MapInteractive() || ExplorationActive("locationBrief") || StoryView() != null)
             { _travelWatch.Reset(); _travelTargetId = null; return; }
             if (!accepted || !_types["move"].IsInstanceOfType(move) || !ModelLive(move))
             { _speech?.Speak(_text.Get("exploration.noMove"), true); return; }

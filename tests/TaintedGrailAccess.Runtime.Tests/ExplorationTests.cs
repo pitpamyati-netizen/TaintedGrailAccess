@@ -37,8 +37,42 @@ namespace TaintedGrailAccess.Runtime.Tests
             Check(RouteInspection.Inspect(null, origin, target, 3).Availability == RouteAvailability.Missing, "Missing route.");
             Check(RouteInspection.Inspect(Array.Empty<MapPoint>(), origin, target, 3).Availability == RouteAvailability.Missing, "Empty route.");
             Check(RouteInspection.Inspect(new[] { origin, new MapPoint(double.PositiveInfinity, 0) }, origin, target, 3).Availability == RouteAvailability.Unknown, "Invalid route is unknown.");
-            Check(RouteInspection.Inspect(detour, origin, target, -1).Availability == RouteAvailability.Unknown, "Invalid tolerance cannot allow movement.");
+            Check(RouteInspection.Inspect(detour, origin, target, -1).Availability == RouteAvailability.Unknown, "Invalid tolerance makes the estimate unknown.");
             Check(RouteInspection.Inspect(new[] { origin, new MapPoint(7, 0) }, origin, target, 3).Availability == RouteAvailability.Complete, "Exact original arrival tolerance.");
+            var shiftedStart = RouteInspection.Inspect(new[] { new MapPoint(6, 0), target }, origin, target, 3);
+            Check(shiftedStart.StartGap == 6 && shiftedStart.EndGap == 0 && shiftedStart.PointCount == 2,
+                "A shifted start must not be described as a path ending short of the target.");
+            var shortEnd = RouteInspection.Inspect(new[] { origin, new MapPoint(4, 0) }, origin, target, 3);
+            Check(shortEnd.StartGap == 0 && shortEnd.EndGap == 6 && shortEnd.Length == 4,
+                "The estimate reports actual endpoint gaps and length separately.");
+        }
+        public static void RouteEstimateDoesNotVetoOriginalAction()
+        {
+            var origin = new MapPoint(0, 0); var target = new MapPoint(10, 0);
+            foreach (var path in new[] { new[] { origin, target }, new[] { origin, new MapPoint(4, 0) }, Array.Empty<MapPoint>(), new[] { new MapPoint(double.NaN, 0) } })
+            {
+                bool shown = true, nativeAllowed = true; int inspections = 0, originalCalls = 0, moves = 0;
+                var watch = new ExplorationTravelWatch(); var state = new GraphState();
+                var graph = new KeyGraph(state, () =>
+                {
+                    var builder = new GraphBuilder(state);
+                    ExplorationPresentation.Add(builder, state, "location", () => true, () => shown,
+                        () => "Место", () => "?", () => null, () => null,
+                        () => { originalCalls++; if (nativeAllowed) moves++; },
+                        () => { inspections++; RouteInspection.Inspect(path, origin, target, 3); });
+                    return builder.Build();
+                });
+                graph.Rerender(); graph.Tooltip();
+                Check(inspections == 1 && originalCalls == 0 && moves == 0, "Inspecting any estimate remains passive.");
+                graph.Activate();
+                Check(originalCalls == 1 && moves == 1 && inspections == 1, "Enter delegates once to the original handler without using or repeating the estimate.");
+                nativeAllowed = false; graph.Activate();
+                Check(originalCalls == 2 && moves == 1, "Native rejection cannot manufacture movement.");
+                shown = false; graph.Activate(); Check(originalCalls == 2, "A vanished location cannot receive the original handler.");
+                watch.Begin("move", origin, 0, 10);
+                Check(watch.Observe(null, new MapPoint(4, 0), 1, 6, true, true, false) == "stopped",
+                    "Ending an actual move short of the target is not reported as arrival.");
+            }
         }
         public static void DisclosureAndPassiveInspection()
         {

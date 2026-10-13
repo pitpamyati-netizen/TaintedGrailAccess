@@ -14,6 +14,7 @@ namespace TaintedGrailAccess.Runtime.Tests
         {
             ("exploration_camera_relative_geometry_and_map_units", ExplorationTests.Geometry),
             ("exploration_route_detour_missing_partial_invalid_and_tolerance", ExplorationTests.Routes),
+            ("exploration_estimate_is_passive_and_original_handler_decides_movement", ExplorationTests.RouteEstimateDoesNotVetoOriginalAction),
             ("exploration_disclosure_no_hidden_reads_passive_and_stale", ExplorationTests.DisclosureAndPassiveInspection),
             ("exploration_equal_names_reorder_remove_and_procedural_replacement", ExplorationTests.IdentityAndProceduralReplacement),
             ("exploration_progress_stall_once_and_recovery", ExplorationTests.TravelProgressAndStall),

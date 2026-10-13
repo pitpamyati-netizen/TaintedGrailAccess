@@ -18,12 +18,16 @@ namespace TaintedGrailAccess.Runtime
     /// <summary>Evidence level returned by an explicit route query.</summary>
     public enum RouteAvailability { Unknown, Missing, Partial, Complete }
 
-    /// <summary>Explicit route inspection; a nonempty partial path is not a reachable destination.</summary>
+    /// <summary>Passive route estimate, never authorization or a veto for the game's movement handler.</summary>
     public sealed class RouteInspection
     {
         public RouteAvailability Availability { get; }
         public double Length { get; }
-        private RouteInspection(RouteAvailability availability, double length) { Availability = availability; Length = length; }
+        public int PointCount { get; }
+        public double StartGap { get; }
+        public double EndGap { get; }
+        private RouteInspection(RouteAvailability availability, double length, int pointCount = 0, double startGap = 0, double endGap = 0)
+        { Availability = availability; Length = length; PointCount = pointCount; StartGap = startGap; EndGap = endGap; }
         public static RouteInspection Inspect(IEnumerable<MapPoint> path, MapPoint origin, MapPoint target, double tolerance)
         {
             if (!origin.IsFinite || !target.IsFinite || double.IsNaN(tolerance) || tolerance < 0 || double.IsInfinity(tolerance))
@@ -33,8 +37,9 @@ namespace TaintedGrailAccess.Runtime
             if (points.Any(point => !point.IsFinite)) return new RouteInspection(RouteAvailability.Unknown, 0);
             double length = origin.DistanceTo(points[0]);
             for (int i = 1; i < points.Length; i++) length += points[i - 1].DistanceTo(points[i]);
-            return new RouteInspection(origin.DistanceTo(points[0]) <= tolerance && points[points.Length - 1].DistanceTo(target) <= tolerance
-                ? RouteAvailability.Complete : RouteAvailability.Partial, length);
+            var startGap = origin.DistanceTo(points[0]); var endGap = points[points.Length - 1].DistanceTo(target);
+            return new RouteInspection(startGap <= tolerance && endGap <= tolerance
+                ? RouteAvailability.Complete : RouteAvailability.Partial, length, points.Length, startGap, endGap);
         }
     }
 

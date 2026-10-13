@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Runtime.Loader;
 using TaintedGrailAccess.Runtime;
 
@@ -50,6 +51,21 @@ try
         var getter = movementKeys.GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic)!.GetGetMethod(true)!;
         if (getter.ReturnType != typeof(float) || getter.GetParameters().Length != 0) throw new InvalidOperationException("Изменился прямой путь ввода движения.");
     }
+    // Check the compiled adapter, not just the portable fake screen. A generic path estimate
+    // uses different constraints from Hero.Seeker and must never block the original action.
+    var movementAction = bindings.GetMethod("MoveToLocation", BindingFlags.Instance | BindingFlags.NonPublic)!;
+    var estimate = bindings.GetMethod("InspectRoute", BindingFlags.Instance | BindingFlags.NonPublic)!;
+    var pending = new Stack<MethodBase>(new[] { movementAction }); var inspected = new HashSet<MethodBase>();
+    while (pending.TryPop(out var method))
+    {
+        if (!inspected.Add(method)) continue;
+        foreach (var called in CalledMethods(method))
+        {
+            if (called == estimate) throw new InvalidOperationException("Действие подхода вызывает предварительную проверку пути вместо решения игры.");
+            if (called.Module == host.ManifestModule) pending.Push(called);
+        }
+    }
+    Console.WriteLine("Собранное действие подхода не вызывает предварительную проверку пути; решение остаётся игре.");
     Console.WriteLine("Точные привязки M4 и три прямых пути опроса движения найдены; исходные действия не вызывались.");
     foreach (var name in new[] { "TG.Main", "Rewired_Core", "UnityEngine.UI", "Unity.TextMeshPro", "AstarPathfindingProject" })
     {
@@ -64,4 +80,30 @@ catch (Exception error)
     var cause = error is TargetInvocationException invocation && invocation.InnerException != null ? invocation.InnerException : error;
     Console.Error.WriteLine(cause.GetType().Name + ": " + cause.Message);
     return 1;
+}
+
+static IEnumerable<MethodBase> CalledMethods(MethodBase method)
+{
+    var bytes = method.GetMethodBody()?.GetILAsByteArray();
+    if (bytes == null) yield break;
+    var opcodes = typeof(OpCodes).GetFields(BindingFlags.Public | BindingFlags.Static)
+        .Where(field => field.FieldType == typeof(OpCode)).Select(field => (OpCode)field.GetValue(null)!)
+        .ToDictionary(opcode => unchecked((ushort)opcode.Value));
+    for (int offset = 0; offset < bytes.Length;)
+    {
+        ushort value = bytes[offset++];
+        if (value == 0xfe) value = (ushort)(0xfe00 | bytes[offset++]);
+        var opcode = opcodes[value];
+        if (opcode.OperandType == OperandType.InlineMethod)
+            yield return method.Module.ResolveMethod(BitConverter.ToInt32(bytes, offset), method.DeclaringType?.GetGenericArguments(), method.IsGenericMethod ? method.GetGenericArguments() : null)!;
+        offset += opcode.OperandType switch
+        {
+            OperandType.InlineNone => 0,
+            OperandType.ShortInlineBrTarget or OperandType.ShortInlineI or OperandType.ShortInlineVar => 1,
+            OperandType.InlineVar => 2,
+            OperandType.InlineI8 or OperandType.InlineR => 8,
+            OperandType.InlineSwitch => 4 + 4 * BitConverter.ToInt32(bytes, offset),
+            _ => 4
+        };
+    }
 }

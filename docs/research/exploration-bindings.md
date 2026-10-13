@@ -7,7 +7,8 @@ MVID `78793877-83a2-4bfc-970d-974256f05d98`. Assembly-CSharp также пров
 Способ нахождения: локальные метаданные и выборочное чтение ILSpy 11.1.
 Игровые DLL и декомпиляция остаются вне публикуемых файлов.
 
-Подтверждено по исходным обработчикам, пока без живой проверки M4:
+Подтверждено по исходным обработчикам; живая проверка 0.4.0 выявила отказ
+предварительной оценки, успешный подход пока не подтверждён:
 
 - `Awaken.TG.Main.Locations.Location.VisibleToPlayer: bool` исключает Hidden
   и HiddenPassiveProgress; `FullyVisible: bool` дополнительно исключает InFOW.
@@ -31,8 +32,13 @@ MVID `78793877-83a2-4bfc-970d-974256f05d98`. Assembly-CSharp также пров
   `FindWaypointsFor(Seeker,MapCoords,MapCoords,bool,OnPathDelegate)`; `Move`
   пересчитывает путь каждые 0.5 секунды. Для явной проверки применяется
   `FindWaypoints(MapCoords,MapCoords,bool,OnPathDelegate)` без Seeker героя.
-  Наличие vectorPath не доказывает достижение: нужны начало и конец пути.
-  Радиус исходного Move.NextWaypointDistance — 3 единицы; это допуск окончания.
+  Общий запрос задаёт NNConstraint.None и вручную применяет SimpleSmoothModifier;
+  запрос через Seeker использует настройки и обработку пути самого героя.
+  PlanMove отклоняет только null, а не отклонение конечной точки общего запроса.
+  Радиус Move.NextWaypointDistance — 3 единицы до очередной точки его пути,
+  он не является разрешением для общего предварительного запроса.
+  В 0.4.1 Space/F1 оценивает начало/конец/длину без вмешательства в Seeker.
+  Enter не вызывает этот запрос, а передаёт решение исходному обработчику.
 - `Move.CurrentPosition/TargetPosition: MapCoords`, `AnyWaypointsRemaining`,
   `CanExecute`, `Progress`, `Cancellable`; Progress имеет значения 0/2,
   поэтому процент завершения из него не вычисляется. UIStateStack.State.
