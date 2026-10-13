@@ -12,6 +12,13 @@ namespace TaintedGrailAccess.Runtime.Tests
     {
         private static readonly List<(string Name, Action Test)> Cases = new List<(string, Action)>
         {
+            ("exploration_camera_relative_geometry_and_map_units", ExplorationTests.Geometry),
+            ("exploration_route_detour_missing_partial_invalid_and_tolerance", ExplorationTests.Routes),
+            ("exploration_disclosure_no_hidden_reads_passive_and_stale", ExplorationTests.DisclosureAndPassiveInspection),
+            ("exploration_equal_names_reorder_remove_and_procedural_replacement", ExplorationTests.IdentityAndProceduralReplacement),
+            ("exploration_progress_stall_once_and_recovery", ExplorationTests.TravelProgressAndStall),
+            ("exploration_window_modal_pause_replacement_arrival_cancel", ExplorationTests.TravelPauseReplacementArrival),
+            ("exploration_input_hold_event_return_and_interactivity", ExplorationTests.InputAndEventReturn),
             ("combat_inspection_never_plays_and_actions_are_fresh", CombatTests.InspectionAndFreshAction),
             ("combat_card_detail_empty_tooltip_and_hidden_description", CombatTests.CardDetailVisibility),
             ("combat_class_deck_nested_sides_return_and_held_input", CombatTests.ClassDeckNestedInspection),

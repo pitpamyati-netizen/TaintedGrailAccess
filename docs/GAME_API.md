@@ -4,6 +4,17 @@
 [источник и условия](research/template-import.md).
 Метод исследования — [GAME_DISCOVERY.md](GAME_DISCOVERY.md).
 
+## Исследование M4, 13 октября 2026
+
+Повторно проверены inventory GOG 1.61 и журнал загрузки. Установлены реальные
+правила Location.FullyVisible/VLocation.ShouldBeVisible и fullyIcon/partlyIcon
+карты; частичный значок не разрешает чтение имени. BaseScene регистрирует
+AstarPathfinder; найден оригинальный Hero.AcceptTarget(TargetChange),
+HeroMovement.GoTo/CancelMove и отдельный прямой опрос VHeroKeys.
+Точные имена, сигнатуры, отпечаток, исходные вызывающие методы и границы
+собраны в [exploration-bindings.md](research/exploration-bindings.md).
+Это статические доказательства; проверка движения и NVDA M4 пока отсутствует.
+
 ## Дополнение M3, 0.3.4, 13 октября 2026
 
 Повторный PE/CLI inventory и последний журнал загрузки подтверждают ту же

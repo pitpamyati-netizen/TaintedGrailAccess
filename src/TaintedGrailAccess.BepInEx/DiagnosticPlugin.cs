@@ -16,7 +16,7 @@ namespace TaintedGrailAccess.BepInExHost
     /// Speech success is not complete game accessibility.
     /// </summary>
     [DefaultExecutionOrder(-32000)]
-    [BepInPlugin("org.taintedgrailaccess.diagnostics", "Tainted Grail Access Diagnostics", "0.3.4")]
+    [BepInPlugin("org.taintedgrailaccess.diagnostics", "Tainted Grail Access Diagnostics", "0.4.0")]
     public sealed class DiagnosticPlugin : BaseUnityPlugin
     {
         private WindowsSpeechOutput _speech;

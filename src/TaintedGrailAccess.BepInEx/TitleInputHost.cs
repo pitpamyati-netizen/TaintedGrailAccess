@@ -106,6 +106,9 @@ namespace TaintedGrailAccess.BepInExHost
                 Target(loader, "Start", nameof(BeforeLoaderStart)),
                 Target(assembly.GetType("Awaken.TG.Main.UI.TitleScreen.VLoadingScreenUI", true), "Update", nameof(BeforeLoadingUpdate)),
                 Target(gameUi, "PerformGUI", nameof(BeforeGameGui)),
+                Target(assembly.GetType("Awaken.TG.Main.Heroes.VHeroKeys", true), "get_Horizontal", nameof(BeforeExplorationAxis)),
+                Target(assembly.GetType("Awaken.TG.Main.Heroes.VHeroKeys", true), "get_Vertical", nameof(BeforeExplorationAxis)),
+                Target(assembly.GetType("Awaken.TG.Main.Heroes.VHeroKeys", true), "get_CameraRotation", nameof(BeforeExplorationAxis)),
                 Target(gameUi, "HandleKeyDown", nameof(BeforeKey), typeof(Event)),
                 Target(gameUi, "HandleKeyUp", nameof(BeforeKey), typeof(Event)),
                 Target(gameUi, "DeliverReInputEvent", nameof(BeforeRewired), typeof(InputAction), assembly.GetType("Awaken.TG.MVC.UI.Events.UIAction", true)),
@@ -253,6 +256,7 @@ namespace TaintedGrailAccess.BepInExHost
             _bindings.ClearTextFeedback();
             _bindings.ClearAuxiliaryText();
             _bindings.ClearCombat();
+            _bindings.ClearExploration();
             _lastSnapshot = null;
             _lastFrame = -1;
         }
@@ -327,6 +331,21 @@ namespace TaintedGrailAccess.BepInExHost
             }
             catch (Exception error) { owner.Fail(error); return true; }
         }
+        private static bool BeforeExplorationAxis(MethodBase __originalMethod, ref float __result)
+        {
+            var owner = _owner;
+            if (owner == null) return true;
+            try
+            {
+                var action = ReInput.mapping.Actions.FirstOrDefault(item => item.name == __originalMethod.Name.Substring(4));
+                if (action == null || BeforeRewired(action, null)) return true;
+                // VHeroKeys polls these three actions outside GameUI. Reuse per-source ownership,
+                // allowing independent keyboard/controller contributors and own-handler calls.
+                __result = 0f;
+                return false;
+            }
+            catch (Exception error) { owner.Fail(error); return true; }
+        }
         private static bool BeforeGameSubmit(object __0, ref object __result)
         {
             var owner = _owner;
@@ -386,7 +405,16 @@ namespace TaintedGrailAccess.BepInExHost
             catch (Exception error) { _faults.Report("text.native", error); return false; }
             finally { _bindings.World = null; }
         }
-        public void ObserveText() { WithWorld(() => { _bindings.ObserveText(); _bindings.ObserveAuxiliaryText(); _bindings.ObserveCombat(); return true; }); }
+        public void ObserveText()
+        {
+            WithWorld(() =>
+            {
+                _bindings.ObserveText(); _bindings.ObserveAuxiliaryText(); _bindings.ObserveCombat();
+                // A vanished destination may require the original CancelMove during observation.
+                using (_runtime.Input.EnterOwnAction()) _bindings.ObserveExploration();
+                return true;
+            });
+        }
         private static bool BeforeLegacyKey(Event __0, ref object __result)
         { return BeforeTextKey(__0, ref __result, false); }
         private static bool BeforeTextKey(Event evt, ref object result, bool tmp)
@@ -430,7 +458,7 @@ namespace TaintedGrailAccess.BepInExHost
             if (_traceCount++ < 600) _log.Write("input.host", "frame=" + Time.frameCount + "; " + message);
         }
         public void OnWindowFocusChanged(bool focused)
-        { if (!focused) { _gate.Blur(); _runtime.Input.Release(); _bindings.ClearTextFeedback(); } }
+        { _bindings.PauseExploration(); if (!focused) { _gate.Blur(); _runtime.Input.Release(); _bindings.ClearTextFeedback(); } }
         public void Dispose()
         {
             if (_disposed) return;

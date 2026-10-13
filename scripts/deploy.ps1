@@ -118,7 +118,7 @@ function Get-DiagnosticReferences([string]$GamePath, [string]$ManifestPath, [boo
     if ($exe.Count -ne 1 -or $exe[0].binary.architecture -ne 'x64') { throw 'Нужен подтверждённый PE x64 исполняемый файл игры.' }
     $managed = Join-Path $game ($inventory.layout.selected_data_directory + '\Managed')
     Assert-NoReparsePath $managed
-    foreach ($name in @('mscorlib.dll', 'UnityEngine.CoreModule.dll', 'UnityEngine.UIModule.dll', 'UnityEngine.InputLegacyModule.dll', 'UnityEngine.IMGUIModule.dll', 'UnityEngine.UI.dll', 'Unity.TextMeshPro.dll', 'Rewired_Core.dll')) {
+    foreach ($name in @('mscorlib.dll', 'UnityEngine.CoreModule.dll', 'UnityEngine.UIModule.dll', 'UnityEngine.InputLegacyModule.dll', 'UnityEngine.IMGUIModule.dll', 'UnityEngine.UI.dll', 'Unity.TextMeshPro.dll', 'Rewired_Core.dll', 'AstarPathfindingProject.dll')) {
         $path = Join-Path $managed $name
         Assert-NoReparsePath $path
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Нет локальной ссылки сборки: $name" }
@@ -142,6 +142,7 @@ function Get-DiagnosticReferences([string]$GamePath, [string]$ManifestPath, [boo
             unity_imgui = (Get-FileHash -LiteralPath (Join-Path $managed 'UnityEngine.IMGUIModule.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
             unity_toolkit = (Get-FileHash -LiteralPath (Join-Path $managed 'UnityEngine.UI.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
             unity_tmp = (Get-FileHash -LiteralPath (Join-Path $managed 'Unity.TextMeshPro.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
+            astar = (Get-FileHash -LiteralPath (Join-Path $managed 'AstarPathfindingProject.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
             rewired = (Get-FileHash -LiteralPath (Join-Path $managed 'Rewired_Core.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
         }
     }
@@ -259,7 +260,7 @@ function Get-DiagnosticPackage {
 }
 
 function Assert-MatchingReferences($Package, $References) {
-    foreach ($key in @('game_executable', 'unity_core', 'framework', 'bepinex', 'harmony', 'unity_ui', 'unity_input', 'unity_imgui', 'unity_toolkit', 'unity_tmp', 'rewired')) {
+    foreach ($key in @('game_executable', 'unity_core', 'framework', 'bepinex', 'harmony', 'unity_ui', 'unity_input', 'unity_imgui', 'unity_toolkit', 'unity_tmp', 'rewired', 'astar')) {
         $expectedHash = [string]$Package.Manifest.reference_sha256.$key
         if ($expectedHash -cnotmatch '^[a-f0-9]{64}$' -or $expectedHash -cne $References.ReferenceHashes[$key]) {
             throw 'Локальные игровые/загрузочные файлы отличаются от использованных при сборке. Соберите Diagnostics заново для выбранной GameDir.'

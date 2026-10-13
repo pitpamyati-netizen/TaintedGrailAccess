@@ -95,11 +95,14 @@ namespace TaintedGrailAccess.BepInExHost
             InitializeGameText(assembly);
             InitializeText();
             InitializeCombat(assembly);
+            InitializeExploration(assembly);
         }
 
         public void Register(ScreenManager screens)
         {
             screens.Register(new Recipe(this, "menu", 0));
+            screens.Register(new Recipe(this, "exploration", 2));
+            screens.Register(new Recipe(this, "locationBrief", 7));
             foreach (var kind in PathScreens) screens.Register(new Recipe(this, kind,
                 kind == "tutorial" ? 1 : kind == "mode" ? 4 : kind == "class" ? 6 : kind == "run" ? 7 :
                 kind == "fightEntry" ? 8 : kind == "story" ? 9 : kind == "slots" ? 12 : kind == "creator" ? 13 :
@@ -180,6 +183,7 @@ namespace TaintedGrailAccess.BepInExHost
             if (kind == "help") return HelpOpen;
             if (kind == "raw") return RawView() != null;
             if (kind == "unmapped") return UnsupportedModal();
+            if (ExplorationScreens.Contains(kind)) return ExplorationActive(kind);
             if (CombatScreens.Contains(kind)) return CombatActive(kind);
             if (PathScreens.Contains(kind)) return PathActive(kind);
             var view = View(kind);
@@ -198,10 +202,12 @@ namespace TaintedGrailAccess.BepInExHost
             var top = TopLayerModel();
             return top != null && !new[] { "menu", "settings", "consent", "popup", "bug" }.Concat(PathScreens.Where(k => k != "tutorial")).Concat(CombatScreens).Any(kind => ReferenceEquals(top, Find(kind)))
                 && !KnownCombatOwner(top)
+                && !ReferenceEquals(top, Find("locationBrief"))
                 && !All("storyOnTop").Any(model => ReferenceEquals(model, top));
         }
         private bool CanAct(string kind)
         {
+            if (ExplorationScreens.Contains(kind)) return ExplorationCanAct(kind);
             if (CombatScreens.Contains(kind)) return CombatCanAct(kind);
             if (!Active(kind) || Capturing() || HelpOpen || _actionScreen != kind) return false;
             if (kind == "loading") return View("popup") == null && View("settings") == null;
@@ -218,11 +224,14 @@ namespace TaintedGrailAccess.BepInExHost
         {
             if (!Active(kind)) return;
             if (kind == "raw" || kind == "unmapped") return;
+            if (ExplorationScreens.Contains(kind)) { BuildExploration(kind, builder); return; }
             if (BuildCombat(kind, builder)) return;
             if (BuildPath(kind, builder)) return;
             if (kind == "help")
             {
                 builder.Add(ControlId.Structural("help.text"), new NodeVtable(new NodeAnnouncement(() => _text.Get("input.help.text"))));
+                if (_helpSource == "exploration" || _helpSource == "locationBrief")
+                    builder.Add(ControlId.Structural("help.exploration"), new NodeVtable(new NodeAnnouncement(() => _text.Get("exploration.help"))));
                 builder.Add(ControlId.Structural("help.close"), new NodeVtable(new NodeAnnouncement(() => _text.Get("input.help.close"))) { OnActivate = () => HelpOpen = false });
                 return;
             }
@@ -316,6 +325,7 @@ namespace TaintedGrailAccess.BepInExHost
         private bool Back(string kind)
         {
             if (kind == "help") { HelpOpen = false; return true; }
+            if (ExplorationScreens.Contains(kind)) return ExplorationBack(kind);
             if (CombatScreens.Contains(kind)) return CombatBack(kind);
             if (PathBack(kind)) return true;
             if (kind != "settings" || !CanAct(kind)) return false;
@@ -370,7 +380,8 @@ namespace TaintedGrailAccess.BepInExHost
             public override int Layer => _layer;
             public override bool Exclusive => _kind == "help";
             public override bool CapturesRawInput => _kind == "raw" || _kind == "unmapped" || _kind == "video";
-            public override bool StartUnfocused => _kind == "tutorial" || _kind == "fightEntry";
+            public override bool StartUnfocused => _kind == "tutorial" || _kind == "fightEntry" || _kind == "exploration";
+            public override string UnfocusedAnnouncement => _kind == "exploration" ? _owner._text.Get("exploration.unfocused") : base.UnfocusedAnnouncement;
             public override void OnFocus() { _owner._actionScreen = _kind; }
             public override void OnUnfocus() { if (_owner._actionScreen == _kind) _owner._actionScreen = null; }
             public override bool IsActive() => _owner.Active(_kind);
@@ -381,6 +392,7 @@ namespace TaintedGrailAccess.BepInExHost
                 if (_owner.CombatInfoInput(_kind, chord)) return true;
                 if (chord.Key != UiKey.F1 || chord.Modifiers != Modifiers.Control || chord.IsRepeat) return false;
                 _owner.HelpOpen = true;
+                _owner._helpSource = _kind;
                 return true;
             }
         }

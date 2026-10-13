@@ -1,0 +1,152 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using TaintedGrailAccess.Graph;
+using TaintedGrailAccess.Runtime;
+
+namespace TaintedGrailAccess.Runtime.Tests
+{
+    internal static class ExplorationTests
+    {
+        private sealed class RecordingSpeech : ISpeechOutput
+        {
+            public void Speak(string text, bool interrupt) { }
+            public void Stop() { }
+        }
+        private static void Check(bool condition, string message) { if (!condition) throw new Exception(message); }
+        public static void Geometry()
+        {
+            var origin = new MapPoint(0, 0);
+            var targets = new[] { new MapPoint(0, 10), new MapPoint(10, 10), new MapPoint(10, 0), new MapPoint(10, -10), new MapPoint(0, -10), new MapPoint(-10, -10), new MapPoint(-10, 0), new MapPoint(-10, 10) };
+            var names = new[] { "ahead", "aheadRight", "right", "behindRight", "behind", "behindLeft", "left", "aheadLeft" };
+            for (int i = 0; i < targets.Length; i++) Check(ExplorationPresentation.Direction(origin, targets[i], 0, 1) == names[i], "Eight camera-relative directions.");
+            Check(ExplorationPresentation.Direction(origin, targets[2], 1, 0) == "ahead", "Turning the camera changes direction, without changing the hero.");
+            Check(ExplorationPresentation.Direction(origin, origin, 0, 1) == "here", "Coincident location.");
+            Check(ExplorationPresentation.Direction(origin, targets[0], 0, 0) == "unknown", "No camera cannot invent a direction.");
+            Check(ExplorationPresentation.Direction(origin, new MapPoint(double.NaN, 0), 0, 1) == "unknown", "Invalid coordinates cannot produce a bearing.");
+            Check(new MapPoint(3, 4).DistanceTo(origin) == 5, "Direct distance in map units.");
+        }
+        public static void Routes()
+        {
+            var origin = new MapPoint(0, 0); var target = new MapPoint(10, 0);
+            var detour = new[] { origin, new MapPoint(0, 5), new MapPoint(10, 5), target };
+            var route = RouteInspection.Inspect(detour, origin, target, 3);
+            Check(route.Availability == RouteAvailability.Complete && route.Length == 20 && origin.DistanceTo(target) == 10, "A detour has a distinct summed path length.");
+            Check(RouteInspection.Inspect(new[] { origin, new MapPoint(4, 0) }, origin, target, 3).Availability == RouteAvailability.Partial, "Nonempty path can end short of the target.");
+            Check(RouteInspection.Inspect(new[] { new MapPoint(6, 0), target }, origin, target, 3).Availability == RouteAvailability.Partial, "A path disconnected from the hero is partial.");
+            Check(RouteInspection.Inspect(null, origin, target, 3).Availability == RouteAvailability.Missing, "Missing route.");
+            Check(RouteInspection.Inspect(Array.Empty<MapPoint>(), origin, target, 3).Availability == RouteAvailability.Missing, "Empty route.");
+            Check(RouteInspection.Inspect(new[] { origin, new MapPoint(double.PositiveInfinity, 0) }, origin, target, 3).Availability == RouteAvailability.Unknown, "Invalid route is unknown.");
+            Check(RouteInspection.Inspect(detour, origin, target, -1).Availability == RouteAvailability.Unknown, "Invalid tolerance cannot allow movement.");
+            Check(RouteInspection.Inspect(new[] { origin, new MapPoint(7, 0) }, origin, target, 3).Availability == RouteAvailability.Complete, "Exact original arrival tolerance.");
+        }
+        public static void DisclosureAndPassiveInspection()
+        {
+            bool disclosed = false, shown = true; int names = 0, moves = 0, inspections = 0;
+            var state = new GraphState();
+            var graph = new KeyGraph(state, () =>
+            {
+                var builder = new GraphBuilder(state);
+                ExplorationPresentation.Add(builder, state, "location", () => disclosed, () => shown,
+                    () => { names++; return "Тайный храм"; }, () => "Нераскрытое место", () => "Справа, 20", () => null,
+                    () => moves++, () => inspections++);
+                return builder.Build();
+            });
+            graph.Rerender();
+            Check(graph.Current.Vtable.Announcements[0].Text() == "Нераскрытое место" && names == 0 && moves == 0, "A partial icon never queries the hidden name or moves the hero.");
+            graph.Tooltip(); Check(inspections == 1 && moves == 0 && names == 0, "Route inspection does not move or reveal a name.");
+            disclosed = true; graph.Rerender(); Check(graph.Current.Vtable.Announcements[0].Text() == "Тайный храм", "Newly disclosed name is read live.");
+            shown = false; graph.Activate(); graph.Tooltip();
+            Check(moves == 0 && inspections == 1 && graph.Current.Vtable.Announcements[0].Text() == null, "Disappearing objects neither speak stale data nor accept actions.");
+        }
+        public static void IdentityAndProceduralReplacement()
+        {
+            var a = new object(); var b = new object(); var objects = new List<object> { a, b }; var state = new GraphState();
+            var graph = new KeyGraph(state, () =>
+            {
+                var builder = new GraphBuilder(state);
+                foreach (var obj in objects) ExplorationPresentation.Add(builder, obj, ReferenceEquals(obj, a) ? "a" : "b", () => true, () => objects.Contains(obj),
+                    () => "Одинаковое место", () => "?", () => "Расстояние", () => null, () => { }, () => { });
+                return builder.Build();
+            });
+            graph.Rerender(); graph.FocusByReference(b); objects.Reverse(); graph.Rerender();
+            Check(ReferenceEquals(graph.Current.Id.Reference, b), "Distance sorting does not switch between equal names.");
+            objects.Remove(b); graph.Rerender(); Check(ReferenceEquals(graph.Current.Id.Reference, a), "Disappeared location falls back to a survivor.");
+            objects.Clear(); graph.Rerender(); objects.Add(new object()); graph.Rerender();
+            Check(graph.Current != null && !ReferenceEquals(graph.Current.Id.Reference, a), "Procedural replacement uses newly built live nodes.");
+        }
+        public static void TravelProgressAndStall()
+        {
+            var watch = new ExplorationTravelWatch(); var origin = new MapPoint(0, 0);
+            watch.Begin("move", origin, 0, 50);
+            Check(watch.Owns("move") && !watch.Owns("different"), "Cancellation only owns the original order.");
+            Check(watch.Observe("move", origin, 7, 50, true, true, false) == null, "No premature stall.");
+            Check(watch.Observe("move", origin, 8, 50, true, true, false) == "stalled", "Detect eight seconds without motion.");
+            Check(watch.Observe("move", origin, 20, 50, true, true, false) == null, "Stall announces once.");
+            Check(watch.Observe("move", new MapPoint(11, 0), 21, 39, true, true, false) == "progress", "Real travel crosses a distance bucket.");
+            Check(watch.Observe("move", new MapPoint(11, 0), 29, 39, true, true, false) == "stalled", "Progress re-arms stall detection.");
+        }
+        public static void TravelPauseReplacementArrival()
+        {
+            var watch = new ExplorationTravelWatch(); var origin = new MapPoint(0, 0);
+            watch.Begin("move", origin, 0, 50);
+            watch.Pause(100);
+            Check(watch.Observe("move", origin, 101, 50, true, true, false) == null, "OS focus return after suspended ticks rebases the stall clock.");
+            watch.Begin("move", origin, 0, 50);
+            Check(watch.Observe("move", origin, 20, 50, true, false, false) == null, "Alt+Tab pauses the stall clock.");
+            Check(watch.Observe("move", origin, 22, 50, false, true, false) == null, "A game modal pauses the stall clock.");
+            Check(watch.Observe("move", origin, 23, 50, true, true, false) == null, "Returning does not immediately report a stall.");
+            Check(watch.Observe("different", origin, 24, 50, true, true, false) == "stopped" && !watch.IsTracking, "Replacement is not arrival.");
+            watch.Begin("move", origin, 25, 2);
+            Check(watch.Observe(null, origin, 26, 0, true, true, true) == "arrived", "Arrival requires actual destination evidence.");
+            Check(watch.Observe(null, origin, 27, 0, true, true, true) == null, "Completion announces once.");
+            watch.Begin("move", origin, 28, 2); watch.Reset(); Check(!watch.IsTracking, "Cancel/scene unload clears owned travel.");
+        }
+        private sealed class WorldScreen : AccessibleScreen
+        {
+            public bool EventOpen, MapReady = true; public int Moves, Cancels;
+            public override string Id => "world";
+            public override string ScreenName => "Исследование";
+            public override bool StartUnfocused => true;
+            public override bool IsActive() => true;
+            public override void Build(GraphBuilder builder)
+            {
+                builder.BeginStop("locations");
+                builder.Add(ControlId.Structural("place"), new NodeVtable(new NodeAnnouncement(() => "Место"))
+                { OnActivate = () => { if (MapReady && !EventOpen) { Moves++; EventOpen = true; } } });
+                builder.BeginStop("travel");
+                builder.Add(ControlId.Structural("cancel"), new NodeVtable(new NodeAnnouncement(() => "Остановить")) { OnActivate = () => Cancels++ });
+            }
+        }
+        public static void InputAndEventReturn()
+        {
+            var screen = new WorldScreen(); var faults = new FaultBoundary(new NullLog()); var screens = new ScreenManager(faults);
+            screens.Register(screen);
+            screens.Register(new EventScreen(screen));
+            using (var runtime = new AccessibilityRuntime(screens, new Navigator(new RecordingSpeech(), new Localizer(new Dictionary<string, string>()), faults), new InputArbitration()))
+            {
+                var gate = new PhysicalInputGate(); long frame = 0;
+                Action<UiKey> press = key => gate.Poll(++frame, frame * 0.1, true, key == UiKey.None ? Array.Empty<HeldKey>() : new[] { new HeldKey((int)key, new KeyChord(key)) }, runtime, () => false);
+                press(UiKey.None); press(UiKey.Enter); Check(screen.Moves == 0 && !gate.Suppress(new KeyChord(UiKey.Enter)), "Unfocused Enter remains with the game.");
+                press(UiKey.None); press(UiKey.Tab); press(UiKey.None); press(UiKey.Down);
+                Check(screen.Moves == 0, "List navigation cannot move the hero.");
+                press(UiKey.None); press(UiKey.Enter); press(UiKey.Enter);
+                Check(screen.Moves == 1 && screens.Current.Screen.Id == "event", "Held Enter opens one original event.");
+                press(UiKey.None); press(UiKey.Escape); press(UiKey.Escape);
+                Check(!screen.EventOpen && screens.Current.Screen.Id == "world" && runtime.Navigator.HasFocus, "Event closes and restores scanner focus without repeating the opening key.");
+                press(UiKey.None); screen.MapReady = false; press(UiKey.Enter); Check(screen.Moves == 1, "Live map interactivity prevents another action.");
+            }
+        }
+        private sealed class EventScreen : AccessibleScreen
+        {
+            private readonly WorldScreen _world;
+            public EventScreen(WorldScreen world) { _world = world; }
+            public override string Id => "event";
+            public override int Layer => 5;
+            public override string ScreenName => "Событие";
+            public override bool IsActive() => _world.EventOpen;
+            public override void Build(GraphBuilder builder) => builder.Add(ControlId.Structural("text"), new NodeVtable(new NodeAnnouncement(() => "Событие")));
+            public override bool OnBack() { _world.EventOpen = false; return true; }
+        }
+    }
+}

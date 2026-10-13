@@ -28,6 +28,7 @@ namespace TaintedGrailAccess.BepInExHost
             RequireHash("Rewired_Core", "cf3c91bed960e0b45e67dc67fb6df6eca7d05a37b803c788bbf2c151d1bde842", "d3f4044c-7648-45c9-b50d-8d7e6d871796");
             RequireHash("UnityEngine.UI", "69aea3e824546d94063dd22ee998125847d65171ab4a210b3f08ef392aabfc97", "d8562c56-a489-4d6f-bb2b-224105bd17d4");
             RequireHash("Unity.TextMeshPro", "b892fcec2b444d6c2623ba456319e71697e9387bd04bee993843f5e26c8f9db9", "5ec98d0f-fd50-4ec7-ac26-58db85bcd6ab");
+            RequireHash("AstarPathfindingProject", "2e45f26e3a09194232aebf342f6c5aa22627f6533d409b30e00c2278fa2778fe", "48d59566-cb6c-457f-8635-ba85dab68d1c");
         }
         private static void RequireHash(string name, string expected, string mvid)
         {

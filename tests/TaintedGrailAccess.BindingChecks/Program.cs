@@ -44,7 +44,14 @@ try
         .Where(field => field.FieldType == runeNames && field.Name != "Empty").Select(field => field.Name).OrderBy(name => name).ToArray();
     if (!actualClasses.SequenceEqual(expectedClasses.OrderBy(name => name))) throw new InvalidOperationException("Перечень классов отличается от исследованных девяти вариантов.");
     Console.WriteLine("Подтверждены девять классов и общие привязки ultimate, порогов, уровней прислужников и просмотра карт.");
-    foreach (var name in new[] { "TG.Main", "Rewired_Core", "UnityEngine.UI", "Unity.TextMeshPro" })
+    var movementKeys = game.GetType("Awaken.TG.Main.Heroes.VHeroKeys", true)!;
+    foreach (var name in new[] { "Horizontal", "Vertical", "CameraRotation" })
+    {
+        var getter = movementKeys.GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic)!.GetGetMethod(true)!;
+        if (getter.ReturnType != typeof(float) || getter.GetParameters().Length != 0) throw new InvalidOperationException("Изменился прямой путь ввода движения.");
+    }
+    Console.WriteLine("Точные привязки M4 и три прямых пути опроса движения найдены; исходные действия не вызывались.");
+    foreach (var name in new[] { "TG.Main", "Rewired_Core", "UnityEngine.UI", "Unity.TextMeshPro", "AstarPathfindingProject" })
     {
         var assembly = Assembly.Load(name);
         Console.WriteLine(name + " MVID=" + assembly.ManifestModule.ModuleVersionId);

@@ -43,7 +43,8 @@ namespace TaintedGrailAccess.BepInExHost
             ["result.takeAllButton"] = "combat.takeAll", ["choose.skipButton"] = "combat.skip",
             ["choose.rerollButton"] = "combat.reroll",
             ["cardSpec.previousArrow"] = "combat.previousSide", ["cardSpec.nextArrow"] = "combat.nextSide",
-            ["combat.classHelp"] = "combat.classHelp", ["combatTutorial.close"] = "combat.close"
+            ["combat.classHelp"] = "combat.classHelp", ["combatTutorial.close"] = "combat.close",
+            ["exploration.burn"] = "exploration.burn"
         };
 
         private void InitializePath(Assembly assembly)
