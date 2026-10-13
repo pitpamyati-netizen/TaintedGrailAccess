@@ -97,7 +97,10 @@ namespace TaintedGrailAccess.BepInExHost
             Prop("item", "Quantity", typeof(int));
             _combatSpriteFields = new[] { _types["characterStats"].GetField("Health"), _types["characterStats"].GetField("CombatPoints"),
                 _types["characterStats"].GetField("XP"), _types["runeStats"].GetField("Charges"),
-                _types["realmStats"].GetField("Wealth"), _types["realmStats"].GetField("WyrdShards") };
+                _types["realmStats"].GetField("Wealth"), _types["realmStats"].GetField("WyrdShards"),
+                _types["realmStats"].GetField("RunestoneDust"), _types["realmStats"].GetField("Blood"),
+                _types["realmStats"].GetField("Tallow"), _types["realmStats"].GetField("CardShreds"),
+                _types["realmStats"].GetField("GoldenTokens"), _types["realmStats"].GetField("JournalPages") };
             if (_combatSpriteFields.Any(f => f == null || !f.IsStatic || !_types["statType"].IsAssignableFrom(f.FieldType))) throw new MissingFieldException("Combat stat sprite metadata");
             Prop("combatItem", "Item"); Prop("combatItemView", "CanBeUsed", typeof(bool));
             Prop("cardSpec", "Host");

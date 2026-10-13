@@ -26,7 +26,16 @@ try
     var host = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.Combine(directories[1], "TaintedGrailAccess.BepInEx.dll"));
     var bindings = host.GetType("TaintedGrailAccess.BepInExHost.TitleUiBindings", true)!;
     var constructor = bindings.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Single();
-    constructor.Invoke(new object[] { game, new Localizer(new Dictionary<string, string>()), new NullLog(), null! });
+    var instance = constructor.Invoke(new object[] { game, new Localizer(new Dictionary<string, string>()), new NullLog(), null! });
+    // The victory summary's VCurrenciesUI shows these eight entries from Realm.Currencies.
+    // Reading a shown sprite must resolve its StatType.DisplayName rather than its abbreviation.
+    // This checks metadata coverage only; translation and speech still require the running game.
+    var currencyStats = game.GetType("Awaken.TG.Main.Realms.Realm+Stats", true)!;
+    var mappedSprites = (FieldInfo[])bindings.GetField("_combatSpriteFields", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(instance)!;
+    var missingCurrencies = new[] { "Wealth", "WyrdShards", "RunestoneDust", "Blood", "Tallow", "CardShreds", "GoldenTokens", "JournalPages" }
+        .Where(name => !mappedSprites.Contains(currencyStats.GetField(name, BindingFlags.Public | BindingFlags.Static)!)).ToArray();
+    if (missingCurrencies.Length != 0) throw new InvalidOperationException("Не названы значки ресурсов результата боя: " + string.Join(", ", missingCurrencies));
+    Console.WriteLine("Все восемь значков ресурсов результата боя связаны с игровыми названиями.");
     foreach (var name in new[] { "TG.Main", "Rewired_Core", "UnityEngine.UI", "Unity.TextMeshPro" })
     {
         var assembly = Assembly.Load(name);

@@ -134,6 +134,26 @@ Dismiss; мод не убивает анимации. `VModalBlocker` на Card/
 действия до завершения; самостоятельные modal-окна имеют приоритет и сохраняют
 GraphState боя. Неизвестный modal по-прежнему передаёт ввод игре.
 
+## Дополнение 0.3.3: значки ресурсов результата боя
+
+В той же TG.Main GOG 1.61 с указанными выше SHA-256/MVID найдены статические
+поля `Awaken.TG.Main.Realms.Realm+Stats`: RunestoneDust, Blood, Tallow,
+CardShreds, GoldenTokens, JournalPages. Их `StatType.Abbreviation` —
+RD/B/Ta/CS/GT/JP; текст берётся из текущего `StatType.DisplayName`, без перевода
+средствами мода. Способ нахождения: локальный inventory и ilspycmd по Realm.
+`Realm.Currencies` перечисляет эти шесть полей и Wealth/WyrdShards.
+`Awaken.TG.Main.Heroes.Stats.VCurrenciesUI.ShowStats()` передаёт тип в
+`Awaken.TG.Main.Fights.Rewards.EndPanels.Stats.StatChangeDisplay`, метод
+`SetTextsInstant(StatType, int, bool)`. Он формирует видимый IconTag/DisplayName
+либо значок с LockedName. Мод сопоставляет только значок уже читаемого текста;
+закрытые ресурсы и скрытые значения не запрашивает.
+
+Журнал прежнего первого боя содержит B/CS/JP/RD/Ta/GT с «Недоступно».
+Metadata-регрессия до правки выявила шесть пропусков; после — прошла для
+всех восьми ресурсов. Пользователь за егеря подтвердил новые названия и
+получение доступной награды с NVDA в 0.3.3; все виды наград не проверены.
+Новых обработчиков действий или изменений правил видимости нет.
+
 Игровые сценарии: рука → tooltip → розыгрыш → цель/отмена → конец хода;
 выбор N карт; сохранение карты; девять классов; смерть цели; победа/награды;
 поражение; удержание Enter, Alt+Tab, повторный вход. Результаты записываются

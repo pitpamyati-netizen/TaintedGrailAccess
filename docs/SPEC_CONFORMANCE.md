@@ -76,7 +76,7 @@
 
 ## Четыре пути ввода: раздел 8
 
-| Путь | Статус 0.3.2 |
+| Путь | Статус 0.3.3 |
 | --- | --- |
 | Poller мода | Early Update и prefixes TitleScreen, BaseScene, GameUI, EventSystem, loading; once/frame, held/release/blur; приоритет живой загрузки |
 | Global keymap/Rewired | Живые enabled keyboard maps; suppress только присвоенных источников. UINaviAction использует фактические Horizontal/Vertical |
@@ -89,6 +89,9 @@
 M1_VERIFICATION.md и M2_VERIFICATION.md. Вход в первый бой принят отдельно.
 Четырнадцать переносимых проверок M3 и BindingChecks описаны в M3_VERIFICATION.md;
 они не заменяют несколько боёв с NVDA и проверку всех классовых вариантов.
+В 0.3.3 BindingChecks проверяет связь всех восьми значков ресурсов результата
+с игровыми названиями; пользователь за егеря подтвердил названия и получение
+доступной награды с NVDA. Полный M3 этим отдельным путём не подтверждён.
 Raw/text отключают навигацию и поиск. Unknown chords вне собственной modal
 проходят игре; KeyUp не мешает штатной очистке held state. Exit/disable/failure
 освобождают ownership; Dispose снимает только собственные Harmony patches.

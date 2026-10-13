@@ -4,12 +4,12 @@
   "success": true,
   "platform": "Windows x64",
   "sdk": "10.0.301",
-  "method": "scripts/test.ps1 historical full checks; dotnet run Runtime.Tests focused 0.3.2; scripts/build.ps1, scripts/deploy.ps1, BindingChecks and user-led NVDA scenarios",
+  "method": "scripts/test.ps1 historical full checks; Runtime.Tests focused 0.3.2 historical; 0.3.3 scripts/build.ps1, scripts/deploy.ps1, focused BindingChecks currency regression and user-led NVDA post-combat scenario",
   "production_reference_check": true,
   "production_target": "netstandard2.0",
   "test_runtime": "8.0.20",
   "game_tested": true,
-  "game_test_scope": "First combat completed on initial 0.3.0; user confirmed selected info readouts and hand/empty-hand focus on 0.3.1. On installed 0.3.2 the user confirmed game-menu opening, held Escape, arrow reading, separate closing and reopening with NVDA; target-selection cancellation on held Escape without opening the menu, return to hand and subsequent Enter-target-Enter card play also accepted. Full M3 gate open",
+  "game_test_scope": "First combat completed on initial 0.3.0; selected readouts and hand focus accepted on 0.3.1; menu and held-Escape target cancellation followed by Enter-target-Enter accepted on 0.3.2. On installed 0.3.3 user confirmed post-combat resource names and Continue to reading and obtaining the available reward with NVDA. Reported class label: Егерь; reward type unspecified. Full M3 gate open",
   "native_speech_tested": true,
   "native_speech_scope": "NVDA heard by blind user; other backends and full gameplay not accepted",
   "historical_game_validation": {
@@ -29,7 +29,7 @@
     "unity_version": "2020.3.23f1",
     "backend": "Mono",
     "loader": "BepInEx 5.4.23.5",
-    "plugin": "0.3.2",
+    "plugin": "0.3.3",
     "architecture": "x64",
     "build_id": "59087960036481007",
     "application_version": "1.61",
@@ -63,7 +63,8 @@
       "initial-m3-result-screen-and-return-to-tutorial",
       "0.3.1-native-menu-opened-and-immediately-closed-on-held-escape",
       "0.3.2-game-menu-open-hold-arrow-reading-close-reopen-with-nvda",
-      "0.3.2-multiple-enemies-target-cancel-escape-hold-hand-return-and-enter-target-enter-with-nvda"
+      "0.3.2-multiple-enemies-target-cancel-escape-hold-hand-return-and-enter-target-enter-with-nvda",
+      "0.3.3-post-combat-resource-names-and-available-reward-path-with-nvda"
     ],
     "portable_tested": true,
     "full_path_accepted": true,
@@ -106,7 +107,8 @@
       "visible-reroll-price-and-wealth",
       "combat-eight-passive-info-shortcuts",
       "combat-within-hand-focus-after-first-last-card-removal-and-empty-hand",
-      "0.3.2-back-and-search-cancellation-once-per-physical-escape-press"
+      "0.3.2-back-and-search-cancellation-once-per-physical-escape-press",
+      "0.3.3-all-eight-visible-result-currency-sprites-use-current-game-displaynames"
     ],
     "compiled_with_game": true,
     "blind_user_accepted": [
@@ -124,7 +126,8 @@
       "0.3.1-health-energy-class-resource-detailed-brief-intents-on-selected-card",
       "0.3.1-hand-focus-after-first-card-play-and-empty-hand",
       "0.3.2-game-menu-open-hold-arrow-reading-close-reopen-with-nvda",
-      "0.3.2-multiple-enemies-target-cancel-escape-hold-hand-return-and-enter-target-enter-with-nvda"
+      "0.3.2-multiple-enemies-target-cancel-escape-hold-hand-return-and-enter-target-enter-with-nvda",
+      "0.3.3-post-combat-resource-names-and-available-reward-path-with-nvda"
     ],
     "game_actions_enabled": true,
     "m1_accepted": true,
@@ -133,7 +136,7 @@
       "m3-multiple-combats-with-nvda",
       "m3-multistep-selection-and-death-of-target",
       "m3-class-variants-and-conversion",
-      "m3-victory-defeat-rewards",
+      "m3-defeat-and-remaining-reward-variants",
       "m3-repeat-cancel-alt-tab",
       "retained-card-native-endturn-live-reproduction",
       "final-quickcast-on-off-single-multiple-target-and-repeat-replay",
@@ -148,7 +151,8 @@
       "class-hint-image-is-not-transcribed",
       "retained-card-native-endturn-static-early-return-risk",
       "exploration-full-run-M4-to-M6-not-implemented-or-accepted",
-      "0.3.1-info-hand-focus-and-0.3.2-game-menu-target-cancel-acceptance-do-not-cover-search-hold-enter-confirm-hold-target-disappearance-or-full-M3"
+      "selected-readouts-hand-menu-target-cancel-and-one-post-combat-reward-path-do-not-cover-search-hold-enter-confirm-hold-target-disappearance-or-full-M3",
+      "0.3.3-post-combat-reward-accepted-for-reported-class-egery-only-reward-type-unspecified"
     ],
     "full_path_scope": "M2 first path from title/new game through tutorial to first combat entry only",
     "full_gameplay_accepted": false,
@@ -157,7 +161,8 @@
     "m3_class_variants_accepted": false,
     "m3_first_combat_accepted": true,
     "m3_escape_menu_accepted": true,
-    "m3_target_cancel_hold_and_replay_accepted": true
+    "m3_target_cancel_hold_and_replay_accepted": true,
+    "m3_post_combat_resource_names_and_available_reward_path_accepted": true
   },
   "results": [
     {
@@ -201,7 +206,12 @@
       "project": "BindingChecks",
       "phase": "metadata-with-game",
       "exit_code": 0,
-      "scope": "Exact M1/M2/M3 binding metadata resolved; no Unity objects, patches or game actions"
+      "version": "0.3.3",
+      "scope": "Exact M1/M2/M3 binding metadata and all eight victory-summary currency sprite fields resolved; no Unity objects, translations, patches or game actions",
+      "regression_before_fix": {
+        "exit_code": 1,
+        "missing_currency_fields": ["RunestoneDust", "Blood", "Tallow", "CardShreds", "GoldenTokens", "JournalPages"]
+      }
     },
     {
       "project": "Deployment 0.3.0 initial",
@@ -225,13 +235,21 @@
       "package_files_verified": 6,
       "live_replayed": true,
       "live_scope": "User confirmed native game-menu opening, held Escape, arrow reading, separate closing and reopening with NVDA; target-selection cancellation on held Escape without opening the menu, return to hand and subsequent Enter-target-Enter card play also accepted. Class and card unspecified; search on hold, Enter confirmation on hold and target disappearance remain pending"
+    },
+    {
+      "project": "Deployment 0.3.3",
+      "phase": "installed-hash-verified",
+      "backup_verified": true,
+      "package_files_verified": 6,
+      "live_replayed": true,
+      "live_scope": "User confirmed post-combat resource names replacing B/CS/JP/RD/Ta/GT and Continue to reading and obtaining the available reward with keyboard and NVDA. Reported class label: Егерь; reward type unspecified; other classes, reward variants and defeat remain pending"
     }
   ],
   "m3_build_evidence": {
     "initial_installed_host_sha256": "53e85330c11ebf5919cc2c0ec7f32abeeac847803ccff8312c9d9f63e2f53f40",
-    "version": "0.3.2",
-    "scope": "Selected info readouts and hand focus accepted on 0.3.1. Installed 0.3.2 Escape fix is portable-tested (81 Runtime) and compiled; native menu and target-selection cancellation on held Escape, hand return and subsequent Enter-target-Enter card play accepted with NVDA. Search on hold, Enter confirmation on hold, target disappearance and full M3 remain pending",
+    "version": "0.3.3",
+    "scope": "0.3.3 currency-name fix compiled with game and verified by a failing-before/passing-after metadata regression covering all eight resources. Installed files and 0.3.2 backup hash verified. User accepted resource names and one available post-combat reward path with NVDA for reported class Егерь. Historical portable checks unchanged; full M3 remains pending",
     "final_candidate_installed": true,
-    "final_candidate_host_sha256": "4638b3474a6ac62b69c23895c7169efaa6f03ee6c1e6f53b98ab700a4d246862"
+    "final_candidate_host_sha256": "1b9619623baae0cfae88ebaef5713ac4658dbcd9251572538f9939c3833c4fb5"
   }
 }
